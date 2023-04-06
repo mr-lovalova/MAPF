@@ -17,36 +17,45 @@ def search(initial_state, frontier):
         # Try to solve a few levels such as SAD1 and SAD2 by hand and entering them below:
 
         return [
-            [PushEE, PushEE],
-            [PullWW, PullWW],
-            [PullSW, PullSW],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
+            [Action.MoveE],
         ]
 
-    else:
-        # Part 2:
-        # Now try to implement the Graph-Search algorithm from R&N figure 3.7
-        # In the case of "failure to find a solution" you should return None.
-        # Some useful methods on the state class which you will need to use are:
-        # state.is_goal_state() - Returns true if the state is a goal state.
-        # state.extract_plan() - Returns the list of actions used to reach this state.
-        # state.get_expanded_states() - Returns a list containing the states reachable from the current state.
-        # You should also take a look at frontier.py to see which methods the Frontier interface exposes
+    # Part 2:
+    # Now try to implement the Graph-Search algorithm from R&N figure 3.7
+    # In the case of "failure to find a solution" you should return None.
+    # Some useful methods on the state class which you will need to use are:
+    # state.is_goal_state() - Returns true if the state is a goal state.
+    # state.extract_plan() - Returns the list of actions used to reach this state.
+    # state.get_expanded_states() - Returns a list containing the states reachable from the current state.
+    # You should also take a look at frontier.py to see which methods the Frontier interface exposes
 
-        iterations = 0
+    iterations = 0
 
-        frontier.add(initial_state)
-        explored = set()
+    frontier.add(initial_state)
+    explored = set()
 
-        while True:
+    while True:
 
-            iterations += 1
-            if iterations % 1000 == 0:
-                print_search_status(explored, frontier)
+        iterations += 1
+        if iterations % 1000 == 0:
+            print_search_status(explored, frontier)
 
-            if memory.get_usage() > memory.max_usage:
-                print_search_status(explored, frontier)
-                print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
-                return None
+        if memory.get_usage() > memory.max_usage:
+            print_search_status(explored, frontier)
+            print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
+            return None
 
 
             # Your code here...
