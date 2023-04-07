@@ -60,18 +60,17 @@ def search(initial_state, frontier):
         # Your code here...
         if frontier.is_empty():
             return None
-        
+
         state = frontier.pop()
-        
+
         if state.is_goal_state():
             print_search_status(explored, frontier)
             return state.extract_plan()
-        
+
         explored.add(state)
-              
+
         for child in state.get_expanded_states():
-            print(child)
-            if child not in frontier and child not in explored:
+            if not frontier.contains(child) and child not in explored:
                 frontier.add(child)
 
 
