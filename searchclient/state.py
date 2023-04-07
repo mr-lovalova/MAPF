@@ -111,13 +111,13 @@ class State:
         agent_row = self.agent_rows[agent]
         agent_col = self.agent_cols[agent]
         agent_color = State.agent_colors[agent]
+        destination_row = agent_row + action.agent_row_delta
+        destination_col = agent_col + action.agent_col_delta
 
         if action.type is ActionType.NoOp:
             return True
 
         elif action.type is ActionType.Move:
-            destination_row = agent_row + action.agent_row_delta
-            destination_col = agent_col + action.agent_col_delta
             return self.is_free(destination_row, destination_col)
 
         elif action.type is ActionType.Push:
@@ -125,13 +125,13 @@ class State:
             destination_col = agent_col + action.agent_col_delta
             return (
                 self.boxes[destination_row][destination_col] != 0
-                and State.box_colors[self.boxes[destination_row][destination_col] - 'A'] == agent_color
+                and State.box_colors[ord(self.boxes[destination_row][destination_col]) - ord('A')] == agent_color
                 and self.is_free(destination_row + action.box_row_delta, destination_col + action.box_col_delta)
             )
 
         return (
             self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta] != 0
-            and State.box_colors[self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta] - 'A'] == agent_color
+            and State.box_colors[ord(self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta]) - ord('A')] == agent_color
             and self.is_free(destination_row, destination_col)
         )
 

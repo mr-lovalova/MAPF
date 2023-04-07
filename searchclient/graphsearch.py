@@ -9,7 +9,7 @@ start_time = time.perf_counter()
 
 def search(initial_state, frontier):
 
-    output_fixed_solution = True
+    output_fixed_solution = False
 
     if output_fixed_solution:
         # Part 1:
