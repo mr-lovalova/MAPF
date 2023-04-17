@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from collections import deque
+from queue import PriorityQueue
+from itertools import count
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
@@ -74,22 +76,27 @@ class FrontierBestFirst(Frontier):
     def __init__(self, heuristic: 'Heuristic'):
         super().__init__()
         self.heuristic = heuristic
-        raise NotImplementedError
+        self.queue = PriorityQueue()
+        self.set = set()
+        self._counter = count()
     
     def add(self, state: 'State'):
-        raise NotImplementedError
+        f = self.heuristic.f(state)
+        self.queue.put((f,next(self._counter),state))
+        self.set.add(state)
     
     def pop(self) -> 'State':
-        raise NotImplementedError
+        return self.queue.get()[2]
     
     def is_empty(self) -> 'bool':
-        raise NotImplementedError
+        return self.queue.empty()
     
     def size(self) -> 'int':
-        raise NotImplementedError
+        return self.queue.qsize()
     
     def contains(self, state: 'State') -> 'bool':
-        raise NotImplementedError
+        return state in self.set
     
     def get_name(self):
         return 'best-first search using {}'.format(self.heuristic)
+    

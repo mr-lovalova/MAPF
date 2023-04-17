@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import sys
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
@@ -6,7 +7,7 @@ class Heuristic(metaclass=ABCMeta):
         pass
     
     def h(self, state: 'State') -> 'int':
-        raise NotImplementedError
+        return 0
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass
