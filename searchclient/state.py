@@ -53,6 +53,18 @@ class State:
                 copy_agent_rows[agent] += action.agent_row_delta
                 copy_agent_cols[agent] += action.agent_col_delta
 
+            elif action.type is ActionType.Push:
+                copy_agent_rows[agent] += action.agent_row_delta
+                copy_agent_cols[agent] += action.agent_col_delta
+                copy_boxes[copy_agent_rows[agent] + action.box_row_delta][copy_agent_cols[agent] + action.box_col_delta] = copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]]
+                copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = ""
+
+            elif action.type is ActionType.Pull:
+                copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = copy_boxes[copy_agent_rows[agent] - action.box_row_delta][copy_agent_cols[agent] - action.box_col_delta]
+                copy_boxes[copy_agent_rows[agent] - action.box_row_delta][copy_agent_cols[agent] - action.box_col_delta] = ""
+                copy_agent_rows[agent] += action.agent_row_delta
+                copy_agent_cols[agent] += action.agent_col_delta
+
         copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes)
 
         copy_state.parent = self
@@ -131,7 +143,9 @@ class State:
 
         return (
             self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta] != ""
-            and State.box_colors[ord(self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta]) - ord('A')] == agent_color
+            and State.box_colors[ord(
+                self.boxes[agent_row - action.box_row_delta][agent_col - action.box_col_delta]
+            ) - ord('A')] == agent_color
             and self.is_free(destination_row, destination_col)
         )
 
