@@ -1,6 +1,7 @@
 import memory
 import time
 import sys
+from assigner import Assigner
 
 from action import Action
 globals().update(Action.__members__)
@@ -8,6 +9,7 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def search(initial_state, frontier):
+    Assigner(initial_state).assign_tasks()
 
     output_fixed_solution = False
 
