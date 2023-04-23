@@ -3,15 +3,6 @@ from math import floor
 from state import State
 from sys import stderr
 
-class Goal:
-    def __init__(self, location: tuple, goal_type: str):
-        self.location = location
-        self.goal_type = goal_type
-
-    def __repr__(self):
-        return f"'{self.goal_type}' {self.location}"
-
-
 class Dijkstra:
     def __init__(self, graph, start):
         self.graph = graph
@@ -74,11 +65,11 @@ class Assigner:
         boxes = {}
         for letter in letters:
             boxes[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state.boxes[row][col] == letter]
-        goals = [
-                Goal((row, col), State.goals[row][col]) for row in range(n_rows) for col in range(n_cols)
-                if State.goals[row][col] in letters or '0' <=  State.goals[row][col] <= '9' and ord(State.goals[row][col]) - ord('0') == agent
-        ]
+        goals = {}
+        for letter in letters + [chr(ord('0') + agent)]:
+            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if State.goals[row][col] == letter]
 
+        print(f"Agent {agent} boxes: {boxes}", file=stderr, flush=True)
         print(f"Agent {agent} goals: {goals}", file=stderr, flush=True)
 
     def assign_tasks(self) -> dict:
