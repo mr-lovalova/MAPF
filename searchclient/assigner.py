@@ -3,55 +3,30 @@ from math import floor
 from state import State
 from sys import stderr
 
-class Dijkstra:
-    def __init__(self, graph, start):
-        self.graph = graph
-        self.start = start
-        self.distances = None
-        self.visited = None
 
-    def shortest_path(self):
-        rows = len(self.graph)
-        cols = len(self.graph[0])
-        self.distances = [[float('inf') for j in range(cols)] for i in range(rows)]
-        self.distances[self.start[0]][self.start[1]] = 0
-        self.visited = [[False for j in range(cols)] for i in range(rows)]
-        heap = [(0, self.start)]
+class FloodFill:
+    def __init__(self, grid):
+        self.grid = grid
+        self.reachability_map = [[False] * len(grid[0]) for _ in range(len(grid))]
 
-        while heap:
-            curr_dist, curr_node = heapq.heappop(heap)
-            curr_row, curr_col = curr_node
+    def dfs(self, x, y):
+        if x < 0 or y < 0 or x >= len(self.grid) or y >= len(self.grid[0]):
+            return
+        if self.grid[x][y]:
+            return
+        if self.reachability_map[x][y]:
+            return
+        self.reachability_map[x][y] = True
+        self.dfs(x + 1, y)
+        self.dfs(x - 1, y)
+        self.dfs(x, y + 1)
+        self.dfs(x, y - 1)
 
-            if self.visited[curr_row][curr_col]:
-                continue
-
-            self.visited[curr_row][curr_col] = True
-
-            for neighbor in self.get_neighbors(curr_row, curr_col):
-                neighbor_row, neighbor_col = neighbor
-                if self.visited[neighbor_row][neighbor_col]:
-                    continue
-                if self.graph[neighbor_row][neighbor_col]:
-                    new_dist = curr_dist + 1
-                    if new_dist < self.distances[neighbor_row][neighbor_col]:
-                        self.distances[neighbor_row][neighbor_col] = new_dist
-                        heapq.heappush(heap, (new_dist, neighbor))
-
-        return self.distances
-
-    def get_neighbors(self, row, col):
-        neighbors = []
-        rows = len(self.graph)
-        cols = len(self.graph[0])
-        if row > 0:
-            neighbors.append((row-1, col))
-        if row < rows - 1:
-            neighbors.append((row+1, col))
-        if col > 0:
-            neighbors.append((row, col-1))
-        if col < cols - 1:
-            neighbors.append((row, col+1))
-        return neighbors
+    def get_reachability_map(self, position):
+        self.reachability_map = [[False] * len(self.grid[0]) for _ in range(len(self.grid))]
+        x, y = position
+        self.dfs(x, y)
+        return self.reachability_map
 
 
 class Assigner:
@@ -62,12 +37,14 @@ class Assigner:
         n_rows, n_cols = len(State.goals), len(State.goals[0])
         agent_color = State.agent_colors[agent]
         letters = [chr(ord('A') + i) for i in range(26) if State.box_colors[i] == agent_color]
+        floodfill = FloodFill(State.walls)
+        reachability_map = floodfill.get_reachability_map((self.state.agent_rows[agent], self.state.agent_cols[agent]))
         boxes = {}
         for letter in letters:
-            boxes[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state.boxes[row][col] == letter]
+            boxes[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state.boxes[row][col] == letter and reachability_map[row][col]]
         goals = {}
         for letter in letters + [chr(ord('0') + agent)]:
-            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if State.goals[row][col] == letter]
+            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if State.goals[row][col] == letter and reachability_map[row][col]]
 
         print(f"Agent {agent} boxes: {boxes}", file=stderr, flush=True)
         print(f"Agent {agent} goals: {goals}", file=stderr, flush=True)
