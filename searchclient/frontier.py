@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from queue import PriorityQueue
 from itertools import count
+import sys
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
@@ -99,4 +100,46 @@ class FrontierBestFirst(Frontier):
     
     def get_name(self):
         return 'best-first search using {}'.format(self.heuristic)
+    
+class CBSQueue:
+    def __init__(self):
+        self.queue = PriorityQueue()
+        self.set = set()
+        self.time_set = set()
+        self._counter = count()
+
+    def _cost(self, node):
+        solution = node.solution
+        cost = 0.0
+        for agent_solution in solution:
+            if agent_solution is None:
+                return float("inf")
+            cost += len(agent_solution)
+        return cost
+    
+    def add(self, node):
+        cost = self._cost(node)
+        node.cost = cost
+        if cost < float("inf"):
+            print("ADDED", cost, file = sys.stderr)
+            self.queue.put((cost,next(self._counter),node))
+            self.set.add(node)
+    
+    def pop(self) -> 'State':
+        return self.queue.get()[2]
+    
+    def is_empty(self) -> 'bool':
+        return self.queue.empty()
+    
+    def size(self) -> 'int':
+        return self.queue.qsize()
+    
+    def contains(self, state: 'State') -> 'bool':
+        return state in self.set
+    
+    def get_name(self):
+        return 'CBS'
+
+
+    
     

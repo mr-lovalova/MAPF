@@ -7,7 +7,9 @@ class Heuristic(metaclass=ABCMeta):
         pass
     
     def h(self, state: 'State') -> 'int':
-        return 0
+        #dx = abs(state.agent_rows[] - goal.x)
+        #dy = abs(node.y - goal.y)
+        return 0#D * (dx + dy)
     
     @abstractmethod
     def f(self, state: 'State') -> 'int': pass

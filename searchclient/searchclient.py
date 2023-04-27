@@ -8,9 +8,10 @@ import cProfile
 import memory
 from color import Color
 from state import State
-from frontier import FrontierBFS, FrontierDFS, FrontierBestFirst
+from frontier import FrontierBFS, FrontierDFS, FrontierBestFirst, CBSQueue
 from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy
 from graphsearch import search
+from cbs_search import cbs_search
 
 class SearchClient:
     @staticmethod
@@ -71,7 +72,7 @@ class SearchClient:
             
             row += 1
         del agent_rows[num_agents:]
-        del agent_rows[num_agents:]
+        del agent_cols[num_agents:]
         
         # Read goal state.
         # line is currently "#goal".
@@ -92,8 +93,8 @@ class SearchClient:
         State.agent_colors = agent_colors
         State.walls = walls
         State.box_colors = box_colors
-        State.goals = goals
-        return State(agent_rows, agent_cols, boxes)
+        #State.goals = goals
+        return State(agent_rows, agent_cols, boxes, goals)
 
     
     @staticmethod
@@ -133,6 +134,8 @@ class SearchClient:
             frontier = FrontierBestFirst(HeuristicWeightedAStar(initial_state, args.wastar))
         elif args.greedy:
             frontier = FrontierBestFirst(HeuristicGreedy(initial_state))
+        elif args.cbs:
+            frontier = CBSQueue()
         else:
             # Default to BFS search.
             frontier = FrontierBFS()
@@ -140,7 +143,10 @@ class SearchClient:
         
         # Search for a plan.
         print('Starting {}.'.format(frontier.get_name()), file=sys.stderr, flush=True)
-        plan = search(initial_state, frontier)
+        if args.cbs:
+            plan = cbs_search(initial_state, frontier)
+        else:
+            plan = search(initial_state, frontier)
         
         # Print plan to server.
         if plan is None:
@@ -165,6 +171,7 @@ if __name__ == '__main__':
     strategy_group.add_argument('-astar', action='store_true', dest='astar', help='Use the A* strategy.')
     strategy_group.add_argument('-wastar', action='store', dest='wastar', nargs='?', type=int, default=False, const=5, help='Use the WA* strategy.')
     strategy_group.add_argument('-greedy', action='store_true', dest='greedy', help='Use the Greedy strategy.')
+    strategy_group.add_argument('-cbs', action='store_true', dest='cbs', help='Use the cbs strategy.')
     
     args = parser.parse_args()
     

@@ -1,11 +1,12 @@
 import random
+import sys
 
 from action import Action, ActionType
 
 class State:
     _RNG = random.Random(1)
 
-    def __init__(self, agent_rows, agent_cols, boxes):
+    def __init__(self, agent_rows, agent_cols, boxes, goals):
         '''
         Constructs an initial state.
         Arguments are not copied, and therefore should not be modified after being passed in.
@@ -25,6 +26,7 @@ class State:
 
         Note: The state should be considered immutable after it has been hashed, e.g. added to a dictionary or set.
         '''
+        self._goals = goals
         self.agent_rows = agent_rows
         self.agent_cols = agent_cols
         self.boxes = boxes
@@ -38,7 +40,6 @@ class State:
         Returns the state resulting from applying joint_action in this state.
         Precondition: Joint action must be applicable and non-conflicting in this state.
         '''
-
         # Copy this state.
         copy_agent_rows = self.agent_rows[:]
         copy_agent_cols = self.agent_cols[:]
@@ -65,38 +66,37 @@ class State:
                 copy_agent_rows[agent] += action.agent_row_delta
                 copy_agent_cols[agent] += action.agent_col_delta
 
-        copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes)
+        copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes, self._goals)
 
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
-
         return copy_state
 
     def is_goal_state(self) -> 'bool':
-        for row in range(len(State.goals)):
-            for col in range(len(State.goals[row])):
-                goal = State.goals[row][col]
-
+        for row in range(len(self._goals)):
+            for col in range(len(self._goals[row])):
+                goal = self._goals[row][col]
                 if 'A' <= goal <= 'Z' and self.boxes[row][col] != goal:
                     return False
                 elif '0' <= goal <= '9' and not (self.agent_rows[ord(goal) - ord('0')] == row and self.agent_cols[ord(goal) - ord('0')] == col):
                     return False
         return True
 
-    def get_expanded_states(self) -> '[State, ...]':
+    def get_expanded_states(self, constraints) -> '[State, ...]':
         num_agents = len(self.agent_rows)
-
         # Determine list of applicable action for each individual agent.
-        applicable_actions = [[action for action in Action if self.is_applicable(agent, action)] for agent in range(num_agents)]
-
-        # Iterate over joint actions, check conflict and generate child states.
+        applicable_actions = [[action for action in Action if self.is_applicable(agent, action, constraints)] for agent in range(num_agents)]
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
         expanded_states = []
         while True:
             for agent in range(num_agents):
-                joint_action[agent] = applicable_actions[agent][actions_permutation[agent]]
+                try:
+                    joint_action[agent] = applicable_actions[agent][actions_permutation[agent]]
+                except IndexError:
+                    print(actions_permutation, file = sys.stderr)
+                    return expanded_states
 
             if not self.is_conflicting(joint_action):
                 expanded_states.append(self.apply_action(joint_action))
@@ -115,20 +115,23 @@ class State:
             # Last permutation?
             if done:
                 break
-
+        #print((self.agent_rows[0], self.agent_cols[0]),len(expanded_states), file = sys.stderr)
         State._RNG.shuffle(expanded_states)
         return expanded_states
 
-    def is_applicable(self, agent: 'int', action: 'Action') -> 'bool':
+    def is_applicable(self, agent: 'int', action: 'Action', constraints) -> 'bool':
         agent_row = self.agent_rows[agent]
         agent_col = self.agent_cols[agent]
         agent_color = State.agent_colors[agent]
         destination_row = agent_row + action.agent_row_delta
         destination_col = agent_col + action.agent_col_delta
 
+        if ((destination_row,destination_col), self.g) in constraints:
+            return False
+
         if action.type is ActionType.NoOp:
             return True
-
+        
         elif action.type is ActionType.Move:
             return self.is_free(destination_row, destination_col)
 
@@ -188,6 +191,63 @@ class State:
 
     def is_free(self, row: 'int', col: 'int') -> 'bool':
         return not State.walls[row][col] and self.boxes[row][col] == '' and self.agent_at(row, col) is None
+    
+    def is_conflict(self, joint_action: '[Action, ...]', time):
+        num_agents = len(self.agent_rows)
+        num_agents = len(joint_action)
+        destination_rows = [None for _ in range(num_agents)] # row of new cell to become occupied by action
+        destination_cols = [None for _ in range(num_agents)] # column of new cell to become occupied by action
+        box_rows = [None for _ in range(num_agents)] # current row of box moved by action
+        box_cols = [None for _ in range(num_agents)] # current column of box moved by action
+
+        # Collect cells to be occupied and boxes to be moved.
+        for agent in range(num_agents):
+            action = joint_action[agent]
+            agent_row = self.agent_rows[agent]
+            agent_col = self.agent_cols[agent]
+
+            if action.type is ActionType.NoOp:
+                #pass
+                destination_rows[agent] = agent_row
+                destination_cols[agent] = agent_col
+
+            elif action.type is ActionType.Move:
+                destination_rows[agent] = agent_row + action.agent_row_delta
+                destination_cols[agent] = agent_col + action.agent_col_delta
+                box_rows[agent] = agent_row # Distinct dummy value.
+                box_cols[agent] = agent_col # Distinct dummy value.
+
+        for a1 in range(num_agents):
+            if joint_action[a1] is Action.NoOp:
+                #continue
+                pass
+            for a2 in range(a1 + 1, num_agents):
+                if joint_action[a2] is Action.NoOp:
+                    #continue
+                    pass
+
+                # vertex conflict
+                if destination_rows[a1] == destination_rows[a2] and destination_cols[a1] == destination_cols[a2]:
+                    type_ = "VERTEX"
+                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
+                    return [(a1, (destination_rows[a1], destination_cols[a1]), time), (a2, (destination_rows[a2], destination_cols[a2]), time)], type_
+                elif (destination_rows[a1] == self.agent_rows[a2] and destination_cols[a1] == self.agent_cols[a2] and
+                      destination_rows[a2] == self.agent_rows[a1] and destination_cols[a2] == self.agent_cols[a1]):
+                    type_ = "EDGE"
+                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
+                    return [(a1, (destination_rows[a1], destination_cols[a1]),time),(a2, (destination_rows[a2], destination_cols[a2]),time) ], type_
+                # follow conflict
+                elif destination_rows[a1] == self.agent_rows[a2] and destination_cols[a1] == self.agent_cols[a2]:
+                    type_ = "FOLLOW"
+                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
+                    return [(a1, (destination_rows[a1], destination_cols[a1]),time),(a2, (destination_rows[a1], destination_cols[a1]),time-1) ], type_
+                # follow conflict
+                elif destination_rows[a2] == self.agent_rows[a1] and destination_cols[a2] == self.agent_cols[a1]:
+                    type_ = "FOLLOW"
+                    #print(type_,(destination_rows[a2], destination_cols[a2]), file = sys.stderr)
+                    return [(a2, (destination_rows[a2], destination_cols[a2]),time),(a1, (destination_rows[a2], destination_cols[a2]),time-1) ], type_
+
+        return False
 
     def agent_at(self, row: 'int', col: 'int') -> 'char':
         for agent in range(len(self.agent_rows)):
@@ -212,7 +272,7 @@ class State:
             _hash = _hash * prime + hash(tuple(State.agent_colors))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self.boxes))
             _hash = _hash * prime + hash(tuple(State.box_colors))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in State.goals))
+            _hash = _hash * prime + hash(tuple(tuple(row) for row in self._goals))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
             self._hash = _hash
         return self._hash
@@ -226,7 +286,8 @@ class State:
         if State.walls != other.walls: return False
         if self.boxes != other.boxes: return False
         if State.box_colors != other.box_colors: return False
-        if State.goals != other.goals: return False
+        if self._goals != other._goals: return False
+        if self.g != other.g: return False ##### 
         return True
 
     def __repr__(self):
@@ -240,3 +301,16 @@ class State:
                 else: line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
+
+class TimeState(State):
+    def __eq__(self, other):
+        if self.g != other.g: return False
+        return super().__eq__(other)
+    
+    def __hash__(self):
+        if self._hash is None:
+            prime = 31
+            _hash = super().__hash__()
+            _hash = _hash * prime + hash((self.g))
+            self._hash = _hash
+        return self._hash 

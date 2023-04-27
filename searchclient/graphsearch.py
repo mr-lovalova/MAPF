@@ -7,7 +7,7 @@ globals().update(Action.__members__)
 
 start_time = time.perf_counter()
 
-def search(initial_state, frontier):
+def search(initial_state, frontier, constraints = []):
 
     output_fixed_solution = False
 
@@ -47,7 +47,6 @@ def search(initial_state, frontier):
     explored = set()
 
     while True:
-
         iterations += 1
         if iterations % 1000 == 0:
             print_search_status(explored, frontier)
@@ -65,11 +64,12 @@ def search(initial_state, frontier):
 
         if state.is_goal_state():
             print_search_status(explored, frontier)
-            return state.extract_plan()
+            plan = state.extract_plan()
+            return plan
 
         explored.add(state)
 
-        for child in state.get_expanded_states():
+        for child in state.get_expanded_states(constraints):
             if not frontier.contains(child) and child not in explored:
                 frontier.add(child)
 
