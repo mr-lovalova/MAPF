@@ -6,13 +6,14 @@ from action import Action
 import copy
 import sys
 
+
 class Root:
     def __init__(self, num_agents):
         self.solution = []
         self.cost = 0
         self.idx_constraints = [set() for _ in range(num_agents)]
 
-    def get_conflict(self) -> 'bool' or 'Conflict':
+    def get_conflict(self) -> "bool" or "Conflict":
         longest_plan = len(max(self.solution, key=len))
         state = copy.deepcopy(self.initial_state)
         for step in range(longest_plan):
@@ -23,13 +24,13 @@ class Root:
                 except IndexError:
                     action = [Action.NoOp]
                 joint_action = joint_action + action
-            #print("JOINT ACTION",joint_action, file = sys.stderr)
+            # print("JOINT ACTION",joint_action, file = sys.stderr)
             conflicts = state.is_conflict(joint_action, state.g)
             if conflicts:
                 return conflicts
             state = state.apply_action(joint_action)
         return False
-        
+
     def extract_plan(self):
         solution = []
         longest_plan = len(max(self.solution, key=len))
@@ -48,7 +49,7 @@ class Root:
 def catch_goal(item, agent):
     try:
         if int(item) != agent:
-            return('')
+            return ""
         return str(0)
     except:
         return item
@@ -66,37 +67,44 @@ def cbs_search(initial_state, frontier):
         for row in goal:
             for count, item in enumerate(row):
                 row[count] = catch_goal(item, agent)
-        sa_state = State(agent_row,agent_col,state.boxes, goal)
+        sa_state = State(agent_row, agent_col, state.boxes, goal)
         goals.append(goal)
         plan = search(sa_state, sa_frontier)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
-    print("ROOT cost", root.cost, file = sys.stderr)
-    print("____________________________________", file = sys.stderr)
+    print("ROOT cost", root.cost, file=sys.stderr)
+    print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
-        print("COUNT",count, file = sys.stderr)
+        print("COUNT", count, file=sys.stderr)
         count = count + 1
-        if count == 105:
-            break
+        if count == 5:
+            pass
         node = frontier.pop()
-        print("ROOT",node.solution, file = sys.stderr)
-        print("", file = sys.stderr)
-        conflicts= node.get_conflict()
+        print("ROOT", node.solution, file=sys.stderr)
+        print("", file=sys.stderr)
+        conflicts = node.get_conflict()
         if not conflicts:
             plan = node.extract_plan()
             return plan
         for conflict in conflicts:
-            print("AGENT", agent, file = sys.stderr)
-            print("COOONFLICT", conflict.type, conflict.constraints, file = sys.stderr)
             agent, constraints = conflict.agent, conflict.constraints
+            print("AGENT", agent, file=sys.stderr)
+            print("COOONFLICT", conflict.type, conflict.constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.idx_constraints[agent].update(constraints)
-            agent_row, agent_col = [initial_state.agent_rows[agent]], [initial_state.agent_cols[agent]]
-            sa_state = State(agent_row,agent_col,initial_state.boxes, goals[agent])
-            plan = search(sa_state, sa_frontier, constraints= m.idx_constraints[agent])
-            print("PLAN", plan, file = sys.stderr)
+            agent_row, agent_col = [initial_state.agent_rows[agent]], [
+                initial_state.agent_cols[agent]
+            ]
+            sa_state = State(agent_row, agent_col, initial_state.boxes, goals[agent])
+            if not conflict.is_resolveable():
+                plan = None
+            else:
+                plan = search(
+                    sa_state, sa_frontier, constraints=m.idx_constraints[agent]
+                )
+            print("PLAN", plan, file=sys.stderr)
             m.solution[agent] = plan
             frontier.add(m)
-    print(m.solution, file = sys.stderr)
+    print(m.solution, file=sys.stderr)
