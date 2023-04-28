@@ -49,7 +49,8 @@ def search(initial_state, frontier, constraints = []):
     while True:
         iterations += 1
         if iterations % 1000 == 0:
-            print_search_status(explored, frontier)
+            pass
+            #print_search_status(explored, frontier)
 
         if memory.get_usage() > memory.max_usage:
             print_search_status(explored, frontier)
@@ -63,7 +64,7 @@ def search(initial_state, frontier, constraints = []):
         state = frontier.pop()
 
         if state.is_goal_state():
-            print_search_status(explored, frontier)
+            #print_search_status(explored, frontier)
             plan = state.extract_plan()
             return plan
 

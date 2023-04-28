@@ -194,7 +194,9 @@ class State:
     
     def is_conflict(self, joint_action: '[Action, ...]', time):
         num_agents = len(self.agent_rows)
+        directions = ((1,0),(-1,0),(0,1),(0,-1))
         num_agents = len(joint_action)
+        blocked_agents = [False for _ in range(num_agents)]
         destination_rows = [None for _ in range(num_agents)] # row of new cell to become occupied by action
         destination_cols = [None for _ in range(num_agents)] # column of new cell to become occupied by action
         box_rows = [None for _ in range(num_agents)] # current row of box moved by action
@@ -205,47 +207,57 @@ class State:
             action = joint_action[agent]
             agent_row = self.agent_rows[agent]
             agent_col = self.agent_cols[agent]
+            for direction in directions:
+                if self.is_free(agent_row + direction[0],agent_col + direction[1]):
+                    break
+            else:
+                blocked_agents[agent] = True
 
             if action.type is ActionType.NoOp:
-                #pass
                 destination_rows[agent] = agent_row
                 destination_cols[agent] = agent_col
 
             elif action.type is ActionType.Move:
                 destination_rows[agent] = agent_row + action.agent_row_delta
                 destination_cols[agent] = agent_col + action.agent_col_delta
-                box_rows[agent] = agent_row # Distinct dummy value.
-                box_cols[agent] = agent_col # Distinct dummy value.
 
         for a1 in range(num_agents):
-            if joint_action[a1] is Action.NoOp:
-                #continue
-                pass
             for a2 in range(a1 + 1, num_agents):
-                if joint_action[a2] is Action.NoOp:
-                    #continue
-                    pass
-
-                # vertex conflict
                 if destination_rows[a1] == destination_rows[a2] and destination_cols[a1] == destination_cols[a2]:
                     type_ = "VERTEX"
-                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
-                    return [(a1, (destination_rows[a1], destination_cols[a1]), time), (a2, (destination_rows[a2], destination_cols[a2]), time)], type_
+                    constraint = ((destination_rows[a1], destination_cols[a1]),time)
+                    c1 = Conflict(a1,blocked_agents[a1], type_)
+                    c2 = Conflict(a2,blocked_agents[a2], type_)
+                    c1.add_constraint(constraint)
+                    c2.add_constraint(constraint)
+                    return(c1,c2)
+                
                 elif (destination_rows[a1] == self.agent_rows[a2] and destination_cols[a1] == self.agent_cols[a2] and
                       destination_rows[a2] == self.agent_rows[a1] and destination_cols[a2] == self.agent_cols[a1]):
                     type_ = "EDGE"
-                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
-                    return [(a1, (destination_rows[a1], destination_cols[a1]),time),(a2, (destination_rows[a2], destination_cols[a2]),time) ], type_
-                # follow conflict
+                    c1 = Conflict(a1,blocked_agents[a1], type_)
+                    c2 = Conflict(a2,blocked_agents[a2], type_)
+                    c1.add_constraint( ((destination_rows[a1], destination_cols[a1]),time))
+                    #c1.add_constraint( ((destination_rows[a2], destination_cols[a2]),time - 1))
+                    c2.add_constraint( ((destination_rows[a2], destination_cols[a2]), time))
+                    #c2.add_constraint( ((destination_rows[a1], destination_cols[a1]), time -1))
+                    return(c1, c2)
+                
                 elif destination_rows[a1] == self.agent_rows[a2] and destination_cols[a1] == self.agent_cols[a2]:
-                    type_ = "FOLLOW"
-                    #print(type_,(destination_rows[a1], destination_cols[a1]), file = sys.stderr)
-                    return [(a1, (destination_rows[a1], destination_cols[a1]),time),(a2, (destination_rows[a1], destination_cols[a1]),time-1) ], type_
-                # follow conflict
+                    type_ = "FOLLOWONE"
+                    c1 = Conflict(a1,blocked_agents[a1],type_)
+                    c2 = Conflict(a2,blocked_agents[a2], type_)
+                    c1.add_constraint(((destination_rows[a1], destination_cols[a1]),time))
+                    c2.add_constraint(((destination_rows[a1], destination_cols[a1]),time-1))
+                    return(c1, c2)
+
                 elif destination_rows[a2] == self.agent_rows[a1] and destination_cols[a2] == self.agent_cols[a1]:
                     type_ = "FOLLOW"
-                    #print(type_,(destination_rows[a2], destination_cols[a2]), file = sys.stderr)
-                    return [(a2, (destination_rows[a2], destination_cols[a2]),time),(a1, (destination_rows[a2], destination_cols[a2]),time-1) ], type_
+                    c1 = Conflict(a1,blocked_agents[a1], type_)
+                    c2 = Conflict(a2,blocked_agents[a2], type_)
+                    c1.add_constraint(((destination_rows[a2], destination_cols[a2]),time-1))
+                    c2.add_constraint(((destination_rows[a2], destination_cols[a2]),time))
+                    return(c1, c2)
 
         return False
 
@@ -274,6 +286,7 @@ class State:
             _hash = _hash * prime + hash(tuple(State.box_colors))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self._goals))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
+            _hash = _hash * prime + hash(self.g)
             self._hash = _hash
         return self._hash
 
@@ -287,7 +300,7 @@ class State:
         if self.boxes != other.boxes: return False
         if State.box_colors != other.box_colors: return False
         if self._goals != other._goals: return False
-        if self.g != other.g: return False ##### 
+        if self.g != other.g: return False ##### makes MAANDERS05 7 sec faster than with timeState??
         return True
 
     def __repr__(self):
@@ -301,16 +314,22 @@ class State:
                 else: line.append(' ')
             lines.append(''.join(line))
         return '\n'.join(lines)
-
-class TimeState(State):
-    def __eq__(self, other):
-        if self.g != other.g: return False
-        return super().__eq__(other)
     
-    def __hash__(self):
-        if self._hash is None:
-            prime = 31
-            _hash = super().__hash__()
-            _hash = _hash * prime + hash((self.g))
-            self._hash = _hash
-        return self._hash 
+class Conflict:
+    def __init__(self, agent, is_blocked, type_ = None):
+        self.agent = agent
+        self.is_blocked = is_blocked
+        self.constraints = set()
+        self.is_past = False
+        self.type = type_
+
+    def add_constraint(self, constraint):
+        #for constraint in constraints:
+        if constraint[-1] == -1:
+            self.is_blocked = True
+        self.constraints.add(constraint)
+
+    def is_resolveable(self):
+        if (self.type == "FOLLOW") and self.is_blocked:
+            return False # False
+        return True

@@ -4,10 +4,15 @@ import sys
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
+        #self.x_goal
+        #self.y_goal
+        #self.num_agents = len(initial_state.agent_rows)
+        #for row in initial_state._g:
+        #    for col in row:
+        #        for 
         pass
     
     def h(self, state: 'State') -> 'int':
-        #dx = abs(state.agent_rows[] - goal.x)
         #dy = abs(node.y - goal.y)
         return 0#D * (dx + dy)
     

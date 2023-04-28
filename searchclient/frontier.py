@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from queue import PriorityQueue
 from itertools import count
-import sys
 
 class Frontier(metaclass=ABCMeta):
     @abstractmethod
@@ -121,7 +120,6 @@ class CBSQueue:
         cost = self._cost(node)
         node.cost = cost
         if cost < float("inf"):
-            print("ADDED", cost, file = sys.stderr)
             self.queue.put((cost,next(self._counter),node))
             self.set.add(node)
     
@@ -139,7 +137,3 @@ class CBSQueue:
     
     def get_name(self):
         return 'CBS'
-
-
-    
-    
