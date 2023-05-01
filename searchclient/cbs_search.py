@@ -3,12 +3,15 @@ from frontier import FrontierBestFirst
 from heuristic import HeuristicAStar
 from state import State
 from action import Action
+from queue import PriorityQueue
+from itertools import count
 import copy
 import sys
 
 
 class Root:
-    def __init__(self, num_agents):
+    def __init__(self, num_agents, count=0):
+        self.count = count
         self.solution = []
         self.cost = 0
         self.idx_constraints = [set() for _ in range(num_agents)]
@@ -25,7 +28,7 @@ class Root:
                     action = [Action.NoOp]
                 joint_action = joint_action + action
             # print("JOINT ACTION",joint_action, file = sys.stderr)
-            conflicts = state.is_conflict(joint_action, state.g)
+            conflicts = state.is_conflict(joint_action, state.t)
             if conflicts:
                 return conflicts
             state = state.apply_action(joint_action)
@@ -46,12 +49,12 @@ class Root:
         return solution
 
 
-def catch_goal(item, agent):
+def catch_goal(item, agent, agent_color=None):
     try:
         if int(item) != agent:
             return ""
         return str(0)
-    except:
+    except ValueError:
         return item
 
 
@@ -77,11 +80,10 @@ def cbs_search(initial_state, frontier):
     print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
         print("COUNT", count, file=sys.stderr)
-        count = count + 1
-        if count == 5:
+        if count == 20:
             pass
         node = frontier.pop()
-        print("ROOT", node.solution, file=sys.stderr)
+        print("ROOT", node.count, node.solution, file=sys.stderr)
         print("", file=sys.stderr)
         conflicts = node.get_conflict()
         if not conflicts:
@@ -93,7 +95,9 @@ def cbs_search(initial_state, frontier):
             print("COOONFLICT", conflict.type, conflict.constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
+            m.count = count
             m.idx_constraints[agent].update(constraints)
+            print("CONSTRAINTS", m.idx_constraints[agent], file=sys.stderr)
             agent_row, agent_col = [initial_state.agent_rows[agent]], [
                 initial_state.agent_cols[agent]
             ]
@@ -107,4 +111,32 @@ def cbs_search(initial_state, frontier):
             print("PLAN", plan, file=sys.stderr)
             m.solution[agent] = plan
             frontier.add(m)
+            count = count + 1
     print(m.solution, file=sys.stderr)
+
+
+class ConflictQueue:
+    def __init__(self):
+        self.queue = PriorityQueue()
+        self.set = set()
+        self._counter = count()
+
+    def add(self, conflict):
+        t = conflict[-1]
+        self.queue.put((t, next(self._counter), conflict))
+        self.set.add(conflict)
+
+    def pop(self) -> "State":
+        return self.queue.get()[2]
+
+    def is_empty(self) -> "bool":
+        return self.queue.empty()
+
+    def size(self) -> "int":
+        return self.queue.qsize()
+
+    def contains(self, state: "State") -> "bool":
+        return state in self.set
+
+    def get_name(self):
+        return "CBS"

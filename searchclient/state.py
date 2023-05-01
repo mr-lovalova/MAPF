@@ -34,6 +34,7 @@ class State:
         self.parent = None
         self.joint_action = None
         self.g = 0
+        self.t = 0
         self._hash = None
 
     def apply_action(self, joint_action: "[Action, ...]") -> "State":
@@ -78,9 +79,11 @@ class State:
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
         copy_state.g = self.g + 1
+        copy_state.t = self.t + 1
         return copy_state
 
-    def is_goal_state(self) -> "bool":
+    def is_goal_state(self, constraints) -> "bool":
+        # if constraints:#
         for row in range(len(self._goals)):
             for col in range(len(self._goals[row])):
                 goal = self._goals[row][col]
@@ -145,7 +148,7 @@ class State:
         destination_row = agent_row + action.agent_row_delta
         destination_col = agent_col + action.agent_col_delta
 
-        if ((destination_row, destination_col), self.g) in constraints:
+        if ((destination_row, destination_col), self.t) in constraints:
             return False
 
         if action.type is ActionType.NoOp:
@@ -270,7 +273,7 @@ class State:
             count = 0
             for direction in directions:
                 if self.is_wall_free(
-                    agent_row + direction[0], agent_col + direction[1]
+                    agent_row + direction[0], agent_col + direction[1] ### not accurate blocking
                 ):
                     if count == 1:
                         break
@@ -285,7 +288,7 @@ class State:
             elif action.type is ActionType.Move:
                 destination_rows[agent] = agent_row + action.agent_row_delta
                 destination_cols[agent] = agent_col + action.agent_col_delta
-        print(blocked_agents, file=sys.stderr)
+
         for a1 in range(num_agents):
             for a2 in range(a1 + 1, num_agents):
                 if (
@@ -296,8 +299,8 @@ class State:
                     constraint = ((destination_rows[a1], destination_cols[a1]), time)
                     c1 = Conflict(a1, blocked_agents[a1], type_)
                     c2 = Conflict(a2, blocked_agents[a2], type_)
-                    c1.add_constraint(constraint)
-                    c2.add_constraint(constraint)
+                    c1.add_constraint(False, constraint)
+                    c2.add_constraint(False, constraint)
                     return (c1, c2)
 
                 elif (
@@ -310,16 +313,16 @@ class State:
                     c1 = Conflict(a1, blocked_agents[a1], type_)
                     c2 = Conflict(a2, blocked_agents[a2], type_)
                     c1.add_constraint(
-                        ((destination_rows[a1], destination_cols[a1]), time)
+                        False, ((destination_rows[a1], destination_cols[a1]), time)
                     )
                     c1.add_constraint(
-                        ((destination_rows[a2], destination_cols[a2]), time - 1)
+                        True, ((destination_rows[a2], destination_cols[a2]), time - 1)
                     )
                     c2.add_constraint(
-                        ((destination_rows[a2], destination_cols[a2]), time)
+                        False, ((destination_rows[a2], destination_cols[a2]), time)
                     )
                     c2.add_constraint(
-                        ((destination_rows[a1], destination_cols[a1]), time - 1)
+                        True, ((destination_rows[a1], destination_cols[a1]), time - 1)
                     )
                     return (c1, c2)
 
@@ -327,14 +330,14 @@ class State:
                     destination_rows[a1] == self.agent_rows[a2]
                     and destination_cols[a1] == self.agent_cols[a2]
                 ):
-                    type_ = "FOLLOWONE"
+                    type_ = "FOLLOW"
                     c1 = Conflict(a1, blocked_agents[a1], type_)
                     c2 = Conflict(a2, blocked_agents[a2], type_)
                     c1.add_constraint(
-                        ((destination_rows[a1], destination_cols[a1]), time)
+                        False, ((destination_rows[a1], destination_cols[a1]), time)
                     )
                     c2.add_constraint(
-                        ((destination_rows[a1], destination_cols[a1]), time - 1)
+                        True, ((destination_rows[a1], destination_cols[a1]), time - 1)
                     )
                     return (c1, c2)
 
@@ -346,10 +349,10 @@ class State:
                     c1 = Conflict(a1, blocked_agents[a1], type_)
                     c2 = Conflict(a2, blocked_agents[a2], type_)
                     c1.add_constraint(
-                        ((destination_rows[a2], destination_cols[a2]), time - 1)
+                        True, ((destination_rows[a2], destination_cols[a2]), time - 1)
                     )
                     c2.add_constraint(
-                        ((destination_rows[a2], destination_cols[a2]), time)
+                        False, ((destination_rows[a2], destination_cols[a2]), time)
                     )
                     return (c1, c2)
 
@@ -362,10 +365,10 @@ class State:
         return None
 
     def extract_plan(self) -> "[Action, ...]":
-        plan = [None for _ in range(self.g)]
+        plan = [None for _ in range(self.t)]
         state = self
         while state.joint_action is not None:
-            plan[state.g - 1] = state.joint_action
+            plan[state.t - 1] = state.joint_action
             state = state.parent
         return plan
 
@@ -380,7 +383,7 @@ class State:
             _hash = _hash * prime + hash(tuple(State.box_colors))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self._goals))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
-            _hash = _hash * prime + hash(self.g)
+            _hash = _hash * prime + hash(self.t)
             self._hash = _hash
         return self._hash
 
@@ -403,7 +406,7 @@ class State:
             return False
         if self._goals != other._goals:
             return False
-        if self.g != other.g:
+        if self.t != other.t:
             return False  ##### makes MAANDERS05 7 sec faster than with timeState??
         return True
 
@@ -429,16 +432,57 @@ class Conflict:
         self.agent = agent
         self.is_blocked = is_blocked
         self.constraints = set()
-        self.is_past = False
         self.type = type_
+        self.resolveable = True
 
-    def add_constraint(self, constraint):
+    def add_constraint(self, is_past, *constraints):
+        for constraint in constraints:
+            if is_past:
+                if constraint[-1] == -1:  ### True past cannot be resolved
+                    if self.type == "FOLLOW":
+                        self.resolveable = False
+                        continue
+                    if self.type == "EDGE":
+                        continue
+                else:
+                    pass
+
+            self.constraints.add(constraint)
+
+    def add_constraint2(self, constraint):  #
         # for constraint in constraints:
         if constraint[-1] == -1:
-            self.is_blocked = True
+            self.is_past = True
         self.constraints.add(constraint)
 
     def is_resolveable(self):
-        if self.is_blocked:
-            return False  # False
-        return True
+        return self.resolveable
+
+
+class BlockNode:
+    num_agent = None
+
+    def __init__(self, position):
+        self.children = [None for _ in range(self.num_agents)]
+        self.position = position
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+
+class BlockTree:
+    directions = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+    def __init__(self, num_agents):
+        self.root = self.getNode()
+
+    def getNode(self, num_agents):
+        return BlockNode()
+
+    def insert(self, agent, position):
+        n = BlockNode(position)
+        for direction in self.directions:
+            if (position[0] + direction[0], position[1] + direction[1]) in self.agents:
+                # set new node
+                pass
+        self.children[agent] = BlockNode(position)
