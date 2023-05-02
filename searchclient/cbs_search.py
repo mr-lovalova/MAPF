@@ -4,7 +4,6 @@ from heuristic import HeuristicAStar
 from state import State
 from action import Action
 from queue import PriorityQueue
-from itertools import count
 import copy
 import sys
 
@@ -14,7 +13,7 @@ class Root:
         self.count = count
         self.solution = []
         self.cost = 0
-        self.idx_constraints = [set() for _ in range(num_agents)]
+        self.constraints = [set() for _ in range(num_agents)]
 
     def get_conflict(self) -> "bool" or "Conflict":
         longest_plan = len(max(self.solution, key=len))
@@ -49,11 +48,11 @@ class Root:
         return solution
 
 
-def catch_goal(item, agent, agent_color=None):
+def catch_goal(item, *agents):
     try:
-        if int(item) != agent:
+        if int(item) not in agents:
             return ""
-        return str(0)
+        return str(agents.index(int(item)))
     except ValueError:
         return item
 
@@ -80,63 +79,71 @@ def cbs_search(initial_state, frontier):
     print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
         print("COUNT", count, file=sys.stderr)
-        if count == 20:
+        if count >= 5000:
             pass
         node = frontier.pop()
         print("ROOT", node.count, node.solution, file=sys.stderr)
         print("", file=sys.stderr)
-        conflicts = node.get_conflict()
-        if not conflicts:
+        conflict = node.get_conflict()
+        if not conflict:
             plan = node.extract_plan()
             return plan
-        for conflict in conflicts:
-            agent, constraints = conflict.agent, conflict.constraints
-            print("AGENT", agent, file=sys.stderr)
-            print("COOONFLICT", conflict.type, conflict.constraints, file=sys.stderr)
+        for idx, agent in enumerate(conflict.agents):
+            constraints = conflict.constraints[agent]
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
-            m.idx_constraints[agent].update(constraints)
-            print("CONSTRAINTS", m.idx_constraints[agent], file=sys.stderr)
-            agent_row, agent_col = [initial_state.agent_rows[agent]], [
-                initial_state.agent_cols[agent]
-            ]
-            sa_state = State(agent_row, agent_col, initial_state.boxes, goals[agent])
-            if not conflict.is_resolveable():
-                plan = None
-            else:
-                plan = search(
-                    sa_state, sa_frontier, constraints=m.idx_constraints[agent]
-                )
-            print("PLAN", plan, file=sys.stderr)
+            m.constraints[agent].update(constraints)
+            plan = resolve_conflict(
+                agent, m.constraints[agent], initial_state, goals[agent]
+            )
             m.solution[agent] = plan
+            if not conflict.resolveable[agent]:
+                # manually adding follow constraint for time < 0
+                other_agent = conflict.agents[::-1][idx]
+                m.constraints[other_agent].update(
+                    {(conflict.conflict[2], conflict.conflict[3])}
+                )
+                plan = resolve_conflict(
+                    other_agent,
+                    m.constraints[other_agent],
+                    initial_state,
+                    goals[other_agent],
+                )
+                m.solution[other_agent] = plan
+
             frontier.add(m)
-            count = count + 1
+        count = count + 1
     print(m.solution, file=sys.stderr)
 
 
-class ConflictQueue:
-    def __init__(self):
-        self.queue = PriorityQueue()
-        self.set = set()
-        self._counter = count()
+def resolve_conflict(agent, constraints, initial_state, goal):
+    sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+    agent_row, agent_col = [initial_state.agent_rows[agent]], [
+        initial_state.agent_cols[agent]
+    ]
+    sa_state = State(agent_row, agent_col, initial_state.boxes, goal)
+    plan = search(sa_state, sa_frontier, constraints=constraints)
+    return plan
 
-    def add(self, conflict):
-        t = conflict[-1]
-        self.queue.put((t, next(self._counter), conflict))
-        self.set.add(conflict)
 
-    def pop(self) -> "State":
-        return self.queue.get()[2]
-
-    def is_empty(self) -> "bool":
-        return self.queue.empty()
-
-    def size(self) -> "int":
-        return self.queue.qsize()
-
-    def contains(self, state: "State") -> "bool":
-        return state in self.set
-
-    def get_name(self):
-        return "CBS"
+def merge(conflict, initial_state):
+    agents = conflict.agents
+    state = copy.deepcopy(initial_state)
+    frontier = FrontierBestFirst(HeuristicAStar(state))
+    agent_rows = []
+    agent_cols = []
+    # print("AGEBTS", agents, file=sys.stderr)
+    for agent in agents:
+        # print(state.agent_rows[agent], state.agent_cols[agent], file=sys.stderr)
+        agent_rows.append(state.agent_rows[agent])
+        agent_cols.append(state.agent_cols[agent])
+    goal = state._goals
+    for row in goal:
+        for count, item in enumerate(row):
+            row[count] = catch_goal(item, *agents)
+    ma_state = State(agent_rows, agent_cols, state.boxes, goal)
+    plan = search(ma_state, frontier)
+    print(agent_rows, agent_cols, file=sys.stderr)
+    print("PLAn", plan, file=sys.stderr)
+    return plan

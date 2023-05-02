@@ -2,6 +2,7 @@ import random
 import sys
 
 from action import Action, ActionType
+from conflict import Conflict
 
 
 class State:
@@ -244,14 +245,27 @@ class State:
             and self.agent_at(row, col) is None
         )
 
-    def is_wall_free(self, row: "int", col: "int") -> "bool":
-        return not State.walls[row][col]
+    def agent_at(self, row: "int", col: "int") -> "char":
+        for agent in range(len(self.agent_rows)):
+            if self.agent_rows[agent] == row and self.agent_cols[agent] == col:
+                return chr(agent + ord("0"))
+        return None
+
+    def get_block(self, row: "int", col: "int") -> "bool":
+        if State.walls[row][col]:
+            return True
+        if not self.boxes[row][col] == "":
+            return True
+        agent_block = self.agent_at(row, col)
+        if agent_block:
+            return agent_block
+        return False
 
     def is_conflict(self, joint_action: "[Action, ...]", time):
         num_agents = len(self.agent_rows)
         directions = ((1, 0), (-1, 0), (0, 1), (0, -1))
         num_agents = len(joint_action)
-        blocked_agents = [False for _ in range(num_agents)]
+        blocked_agents = []
         destination_rows = [
             None for _ in range(num_agents)
         ]  # row of new cell to become occupied by action
@@ -270,16 +284,15 @@ class State:
             action = joint_action[agent]
             agent_row = self.agent_rows[agent]
             agent_col = self.agent_cols[agent]
-            count = 0
+
+            blocks = []
             for direction in directions:
-                if self.is_wall_free(
-                    agent_row + direction[0], agent_col + direction[1] ### not accurate blocking
-                ):
-                    if count == 1:
-                        break
-                    count = count + 1
-            else:
-                blocked_agents[agent] = True
+                blocked = self.get_block(
+                    agent_row + direction[0],
+                    agent_col + direction[1],
+                )
+                blocks.append(blocked)
+            blocked_agents.append(blocks)
 
             if action.type is ActionType.NoOp:
                 destination_rows[agent] = agent_row
@@ -295,13 +308,10 @@ class State:
                     destination_rows[a1] == destination_rows[a2]
                     and destination_cols[a1] == destination_cols[a2]
                 ):
-                    type_ = "VERTEX"
-                    constraint = ((destination_rows[a1], destination_cols[a1]), time)
-                    c1 = Conflict(a1, blocked_agents[a1], type_)
-                    c2 = Conflict(a2, blocked_agents[a2], type_)
-                    c1.add_constraint(False, constraint)
-                    c2.add_constraint(False, constraint)
-                    return (c1, c2)
+                    conflict = Conflict.vertex(
+                        (a1, a2, (destination_rows[a1], destination_cols[a1]), time)
+                    )
+                    return conflict
 
                 elif (
                     destination_rows[a1] == self.agent_rows[a2]
@@ -309,52 +319,28 @@ class State:
                     and destination_rows[a2] == self.agent_rows[a1]
                     and destination_cols[a2] == self.agent_cols[a1]
                 ):
-                    type_ = "EDGE"
-                    c1 = Conflict(a1, blocked_agents[a1], type_)
-                    c2 = Conflict(a2, blocked_agents[a2], type_)
-                    c1.add_constraint(
-                        False, ((destination_rows[a1], destination_cols[a1]), time)
-                    )
-                    c1.add_constraint(
-                        True, ((destination_rows[a2], destination_cols[a2]), time - 1)
-                    )
-                    c2.add_constraint(
-                        False, ((destination_rows[a2], destination_cols[a2]), time)
-                    )
-                    c2.add_constraint(
-                        True, ((destination_rows[a1], destination_cols[a1]), time - 1)
-                    )
-                    return (c1, c2)
+                    v1 = (self.agent_rows[a1], self.agent_cols[a1])
+                    v2 = (destination_rows[a1], destination_cols[a1])
+                    conflict = Conflict.edge((a1, a2, v1, v2, time))
+                    return conflict
 
                 elif (
                     destination_rows[a1] == self.agent_rows[a2]
                     and destination_cols[a1] == self.agent_cols[a2]
                 ):
-                    type_ = "FOLLOW"
-                    c1 = Conflict(a1, blocked_agents[a1], type_)
-                    c2 = Conflict(a2, blocked_agents[a2], type_)
-                    c1.add_constraint(
-                        False, ((destination_rows[a1], destination_cols[a1]), time)
+                    conflict = Conflict.follow(
+                        (a1, a2, (destination_rows[a1], destination_cols[a1]), time)
                     )
-                    c2.add_constraint(
-                        True, ((destination_rows[a1], destination_cols[a1]), time - 1)
-                    )
-                    return (c1, c2)
+                    return conflict
 
                 elif (
                     destination_rows[a2] == self.agent_rows[a1]
                     and destination_cols[a2] == self.agent_cols[a1]
                 ):
-                    type_ = "FOLLOW"
-                    c1 = Conflict(a1, blocked_agents[a1], type_)
-                    c2 = Conflict(a2, blocked_agents[a2], type_)
-                    c1.add_constraint(
-                        True, ((destination_rows[a2], destination_cols[a2]), time - 1)
+                    conflict = Conflict.follow(
+                        (a2, a1, (destination_rows[a2], destination_cols[a2]), time)
                     )
-                    c2.add_constraint(
-                        False, ((destination_rows[a2], destination_cols[a2]), time)
-                    )
-                    return (c1, c2)
+                    return conflict
 
         return False
 
@@ -427,7 +413,7 @@ class State:
         return "\n".join(lines)
 
 
-class Conflict:
+class Constraint:
     def __init__(self, agent, is_blocked, type_=None):
         self.agent = agent
         self.is_blocked = is_blocked
