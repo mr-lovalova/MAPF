@@ -9,7 +9,7 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def search(initial_state, frontier):
-    Assigner(initial_state).assign_tasks()
+    Assigner(initial_state).assign_plans()
 
     output_fixed_solution = False
 
