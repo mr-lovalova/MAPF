@@ -2,8 +2,8 @@ from enum import Enum, unique
 
 @unique
 class Color(Enum):
-    Blue = 0
-    Red = 1
+    Red = 0
+    Blue = 1
     Cyan = 2
     Purple = 3
     Green = 4
