@@ -11,7 +11,7 @@ from color import Color
 from state import State
 from conflict import Conflict
 from frontier import FrontierBFS, FrontierDFS, FrontierBestFirst, CBSQueue
-from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy, HeuristicRegular
+from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy, HeuristicDijkstra, Dijkstra
 from graphsearch import search
 from cbs_search import cbs_search
 
@@ -32,7 +32,6 @@ class SearchClient:
         server_messages.readline()  # #colors
         agent_colors = [None for _ in range(10)]
         box_colors = [None for _ in range(26)]
-        box_colors_with_agents = [None for _ in range(26)]
         line = server_messages.readline()
         while not line.startswith("#"):
             split = line.split(":")
@@ -43,7 +42,6 @@ class SearchClient:
                     agent_colors[ord(e) - ord("0")] = color
                 elif "A" <= e <= "Z":
                     box_colors[ord(e) - ord("A")] = color
-                    box_colors_with_agents[ord(e) - ord("A")] = [color, e]
             line = server_messages.readline()
 
         # Read initial state.
@@ -63,7 +61,6 @@ class SearchClient:
         agent_cols = [None for _ in range(10)]
         walls = [[False for _ in range(num_cols)] for _ in range(num_rows)]
         boxes = [["" for _ in range(num_cols)] for _ in range(num_rows)]
-        box_letters_pos = {}
         row = 0
         for line in level_lines:
             for col, c in enumerate(line):
@@ -73,7 +70,6 @@ class SearchClient:
                     num_agents += 1
                 elif "A" <= c <= "Z":
                     boxes[row][col] = c
-                    box_letters_pos[c] = [row,col]
                 elif c == "+":
                     walls[row][col] = True
 
@@ -83,7 +79,6 @@ class SearchClient:
 
         # Read goal state.
         # line is currently "#goal".
-        goal_letters_pos = {}
         goals = [["" for _ in range(num_cols)] for _ in range(num_rows)]
         line = server_messages.readline()
         row = 0
@@ -91,24 +86,17 @@ class SearchClient:
             for col, c in enumerate(line):
                 if "0" <= c <= "9" or "A" <= c <= "Z":
                     goals[row][col] = c
-                    goal_letters_pos[c] = [row,col]
 
             row += 1
             line = server_messages.readline()
 
         # End.
         # line is currently "#end".
-        State.box_letters_pos = box_letters_pos
-        State.goal_letters_pos = goal_letters_pos
         State.agent_colors = agent_colors
         State.walls = walls
         State.box_colors = box_colors
-        State.box_colors_with_agents = box_colors_with_agents
         # Conflict.constraints = [None for _ in range(num_agents)]
         # Conflict.resolveable = [True for _ in range(num_agents)]
-        print(box_colors_with_agents, file=sys.stderr)
-        print(box_colors_with_agents[0][0].value, file=sys.stderr)
-        print(agent_colors, file=sys.stderr)
         # State.goals = goals
         return State(agent_rows, agent_cols, boxes, goals)
 
@@ -153,8 +141,8 @@ class SearchClient:
         if hasattr(server_messages, "reconfigure"):
             server_messages.reconfigure(encoding="ASCII")
         initial_state = SearchClient.parse_level(server_messages)
-        cope = copy.deepcopy(initial_state)
-        HeuristicRegular(initial_state).h()
+        initial_state.pre_processed_map = Dijkstra(initial_state).distance_matrix()
+
         
         # Select search strategy.
         frontier = None
