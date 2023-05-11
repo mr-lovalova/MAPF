@@ -70,13 +70,14 @@ class GoalsGraph:
                 self.nodes[start].add(goal)
 
         for node, neighbours in self.nodes.items():
-            if node == start or node == finish:
+            if node == start or node == finish or not ord("A") <= ord(node.letter) <= ord("Z"):
                 continue
             path = path_utils.bfs(agent_position, node.position)
             for other_node in self.nodes:
-                if other_node != node and other_node.position in path:
-                    # print(node, other_node, file=stderr, flush=True)
-                    self.nodes[other_node].add(node)
+                if other_node == start or other_node == finish:
+                    continue
+                if not ord('A') <= ord(other_node.letter) <= ord('Z') or other_node != node and other_node.position in path:
+                    self.nodes[node].add(other_node)
 
     def get_order(self) -> list:
         visited = {node: False for node in self.nodes}

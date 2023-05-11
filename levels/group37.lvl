@@ -19,7 +19,7 @@ purple: Z
 +               ABCDEF+    Z Z Z       Z Z Z    +
 +              MNOPQRS+    Z Z Z       Z Z Z    +
 +                     +    Z Z Z       Z Z Z    +
-+                     +    Z Z Z       Z Z Z    +                     
++                     +    Z Z Z       Z Z Z    +
 +   ZZZZZZZZZZZZZZZZZZ+    Z Z Z       Z Z Z    +
 +                     +    Z Z Z       Z Z Z    +
 +   ZZZZZZZZZZZZZZZZZZ+    Z Z Z       Z Z Z    +
@@ -40,7 +40,7 @@ purple: Z
 +                     +                   M     +
 +                     +     F L         T N     +
 +                     +     E K         U O     +
-+                     +     D J         V P     +                     
++                     +     D J         V P     +
 +                     +     C I         W Q     +
 +               FEDCBA+     B H         X R     +
 +                     + 43  A G         Y S  21 +

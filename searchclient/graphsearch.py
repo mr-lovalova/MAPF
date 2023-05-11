@@ -9,7 +9,9 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 def search(initial_state, frontier):
-    print(Assigner(initial_state).assign_plans(), file=sys.stderr, flush=True)
+    plans = Assigner(initial_state).assign_plans()
+    for plan in plans:
+        print(plan, file=sys.stderr, flush=True)
     return
 
     output_fixed_solution = False
