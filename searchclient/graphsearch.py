@@ -64,6 +64,8 @@ def search(initial_state, frontier, constraints=[]):
 
         state = frontier.pop()
 
+        print(state, file=sys.stderr)
+
         if state.is_goal_state(constraints):
             # print_search_status(explored, frontier)
             plan = state.extract_plan()

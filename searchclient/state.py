@@ -401,16 +401,12 @@ class State:
         for row in range(len(self.boxes)):
             line = []
             for col in range(len(self.boxes[row])):
-                if self.boxes[row][col] != "":
-                    line.append(self.boxes[row][col])
-                elif State.walls[row][col] is not None:
-                    line.append("+")
-                elif self.agent_at(row, col) is not None:
-                    line.append(self.agent_at(row, col))
-                else:
-                    line.append(" ")
-            lines.append("".join(line))
-        return "\n".join(lines)
+                if self.boxes[row][col] != '': line.append(self.boxes[row][col])
+                elif State.walls[row][col] is True: line.append('+')
+                elif self.agent_at(row, col) is not None: line.append(self.agent_at(row, col))
+                else: line.append(' ')
+            lines.append(''.join(line))
+        return '\n'.join(lines)
 
 
 class Constraint:
