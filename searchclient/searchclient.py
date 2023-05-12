@@ -2,6 +2,7 @@ import argparse
 import io
 import sys
 import time
+import copy
 
 import cProfile
 
@@ -10,7 +11,7 @@ from color import Color
 from state import State
 from conflict import Conflict
 from frontier import FrontierBFS, FrontierDFS, FrontierBestFirst, CBSQueue
-from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy
+from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy, HeuristicDijkstra, Dijkstra
 from graphsearch import search
 from cbs_search import cbs_search
 
@@ -91,7 +92,6 @@ class SearchClient:
 
         # End.
         # line is currently "#end".
-
         State.agent_colors = agent_colors
         State.walls = walls
         State.box_colors = box_colors
@@ -142,6 +142,8 @@ class SearchClient:
         if hasattr(server_messages, "reconfigure"):
             server_messages.reconfigure(encoding="ASCII")
         initial_state = SearchClient.parse_level(server_messages)
+        initial_state.pre_processed_map = Dijkstra(initial_state).distance_matrix()
+
 
         # Select search strategy.
         frontier = None

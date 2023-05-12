@@ -22,7 +22,7 @@ def search(initial_state, frontier, constraints=[]):
             # print_search_status(explored, frontier)
 
         if memory.get_usage() > memory.max_usage:
-            print_search_status(explored, frontier)
+            # print_search_status(explored, frontier)
             print("Maximum memory usage exceeded.", file=sys.stderr, flush=True)
             return None
 
@@ -31,6 +31,8 @@ def search(initial_state, frontier, constraints=[]):
             return None
 
         state = frontier.pop()
+
+        # print(state, file=sys.stderr)
 
         if state.is_goal_state(constraints):
             # print_search_status(explored, frontier)
