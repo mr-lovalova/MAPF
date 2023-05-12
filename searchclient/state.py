@@ -118,7 +118,7 @@ class State:
                         actions_permutation[agent]
                     ]
                 except IndexError:
-                    print(actions_permutation, file=sys.stderr)
+                    # print(actions_permutation, file=sys.stderr)
                     return expanded_states
 
             if not self.is_conflicting(joint_action):

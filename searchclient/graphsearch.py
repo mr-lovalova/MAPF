@@ -10,38 +10,6 @@ start_time = time.perf_counter()
 
 
 def search(initial_state, frontier, constraints=[]):
-    output_fixed_solution = False
-
-    if output_fixed_solution:
-        # Part 1:
-        # The agents will perform the sequence of actions returned by this method.
-        # Try to solve a few levels such as SAD1 and SAD2 by hand and entering them below:
-
-        return [
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-            [Action.MoveE],
-        ]
-
-    # Part 2:
-    # Now try to implement the Graph-Search algorithm from R&N figure 3.7
-    # In the case of "failure to find a solution" you should return None.
-    # Some useful methods on the state class which you will need to use are:
-    # state.is_goal_state() - Returns true if the state is a goal state.
-    # state.extract_plan() - Returns the list of actions used to reach this state.
-    # state.get_expanded_states() - Returns a list containing the states reachable from the current state.
-    # You should also take a look at frontier.py to see which methods the Frontier interface exposes
-
     iterations = 0
 
     frontier.add(initial_state)

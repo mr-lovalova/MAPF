@@ -97,7 +97,7 @@ class SearchClient:
         State.box_colors = box_colors
         # Conflict.constraints = [None for _ in range(num_agents)]
         # Conflict.resolveable = [True for _ in range(num_agents)]
-        print(box_colors, file=sys.stderr)
+        # print(box_colors, file=sys.stderr)
         # State.goals = goals
         return State(agent_rows, agent_cols, boxes, goals)
 

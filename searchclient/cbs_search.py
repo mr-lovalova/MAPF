@@ -26,7 +26,6 @@ class Root:
                 except IndexError:
                     action = [Action.NoOp]
                 joint_action = joint_action + action
-            # print("JOINT ACTION",joint_action, file = sys.stderr)
             conflicts = state.is_conflict(joint_action, state.t)
             if conflicts:
                 return conflicts
@@ -79,21 +78,22 @@ def cbs_search(initial_state, frontier):
     print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
         print("COUNT", count, file=sys.stderr)
-        if count >= 5000:
-            pass
         node = frontier.pop()
-        print("ROOT", node.count, node.solution, file=sys.stderr)
-        print("", file=sys.stderr)
+        print("ROOT", node.count, '\n', file=sys.stderr)
+        for i, solution in enumerate(node.solution):
+            print(i, solution, file=sys.stderr)
         conflict = node.get_conflict()
         if not conflict:
             plan = node.extract_plan()
             return plan
         for idx, agent in enumerate(conflict.agents):
             constraints = conflict.constraints[agent]
+            print(agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
+            print(agent, m.constraints, file=sys.stderr)
             plan = resolve_conflict(
                 agent, m.constraints[agent], initial_state, goals[agent]
             )
@@ -124,26 +124,4 @@ def resolve_conflict(agent, constraints, initial_state, goal):
     ]
     sa_state = State(agent_row, agent_col, initial_state.boxes, goal)
     plan = search(sa_state, sa_frontier, constraints=constraints)
-    return plan
-
-
-def merge(conflict, initial_state):
-    agents = conflict.agents
-    state = copy.deepcopy(initial_state)
-    frontier = FrontierBestFirst(HeuristicAStar(state))
-    agent_rows = []
-    agent_cols = []
-    # print("AGEBTS", agents, file=sys.stderr)
-    for agent in agents:
-        # print(state.agent_rows[agent], state.agent_cols[agent], file=sys.stderr)
-        agent_rows.append(state.agent_rows[agent])
-        agent_cols.append(state.agent_cols[agent])
-    goal = state._goals
-    for row in goal:
-        for count, item in enumerate(row):
-            row[count] = catch_goal(item, *agents)
-    ma_state = State(agent_rows, agent_cols, state.boxes, goal)
-    plan = search(ma_state, frontier)
-    print(agent_rows, agent_cols, file=sys.stderr)
-    print("PLAn", plan, file=sys.stderr)
     return plan
