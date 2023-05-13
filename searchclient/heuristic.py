@@ -15,46 +15,52 @@ class Heuristic(metaclass=ABCMeta):
         self.map = initial_state.pre_processed_map
 
     def h(self, state) -> 'int':
-        row = state.agent_rows
-        col = state.agent_cols
-        agent_colors = state.agent_colors
-        box_loc = state.boxes
-        box_colors = state.box_colors
-        goals = state._goals
+        # row = state.agent_rows
+        # col = state.agent_cols
+        # agent_colors = state.agent_colors
+        # box_loc = state.boxes
+        # box_colors = state.box_colors
+        # goals = state._goals
+        #
+        # agent_to_box_h = 0
+        # box_to_goal_h = 0
+        # box_pos_col = {}
+        # #agent to box distances
+        # for i, rows in enumerate(box_loc):
+        #     for j, cols in enumerate(rows):
+        #         if cols != '':
+        #             box_color = box_colors[ord(cols)-65]
+        #             box_pos = (j,i)
+        #             box_pos_col[cols] = (j,i)
+        #             agent = [i.value for i in agent_colors if i == box_color]
+        #             agent_pos = (col[agent[0]],row[agent[0]])
+        #             agent_to_box_h+=self.map[agent_pos][box_pos]
+        #
+        #
+        # #box to goal distances - includes initial agent location to agent goal if needed
+        # for i, rows in enumerate(goals):
+        #     for j, cols in enumerate(rows):
+        #         if cols != '' and cols in box_pos_col:
+        #             goal_pos = (j,i)
+        #             box_pos = box_pos_col[cols]
+        #             box_to_goal_h+=self.map[goal_pos][box_pos]
+        #         elif cols != '':
+        #             goal_pos = (j,i)
+        #             agent_pos = (col[int(cols)],row[int(cols)])
+        #             box_to_goal_h+=self.map[goal_pos][agent_pos]
+        # # print(agent_to_box_h+box_to_goal_h,file=sys.stderr)
+        # return agent_to_box_h+box_to_goal_h
+        return 0
 
-        agent_to_box_h = 0
-        box_to_goal_h = 0
-        box_pos_col = {}
-        #agent to box distances
-        for i, rows in enumerate(box_loc):
-            for j, cols in enumerate(rows):
-                if cols != '':
-                    box_color = box_colors[ord(cols)-65]
-                    box_pos = (j,i)
-                    box_pos_col[cols] = (j,i)
-                    agent = [i.value for i in agent_colors if i == box_color]
-                    agent_pos = (col[agent[0]],row[agent[0]])
-                    agent_to_box_h+=self.map[agent_pos][box_pos]
-
-
-        #box to goal distances - includes initial agent location to agent goal if needed
-        for i, rows in enumerate(goals):
-            for j, cols in enumerate(rows):
-                if cols != '' and cols in box_pos_col:
-                    goal_pos = (j,i)
-                    box_pos = box_pos_col[cols]
-                    box_to_goal_h+=self.map[goal_pos][box_pos]
-                elif cols != '':
-                    goal_pos = (j,i)
-                    agent_pos = (col[int(cols)],row[int(cols)])
-                    box_to_goal_h+=self.map[goal_pos][agent_pos]
-        # print(agent_to_box_h+box_to_goal_h,file=sys.stderr)
-        return agent_to_box_h+box_to_goal_h
     @abstractmethod
-    def f(self, state: 'State') -> 'int': pass
+    def f(self, state: 'State') -> 'int':
+        pass
 
     @abstractmethod
-    def __repr__(self): raise NotImplementedError
+    def __repr__(self):
+        raise NotImplementedError
+
+
 class HeuristicDijkstra(Heuristic):
     def __init__(self, initial_state: 'State'):
         super().__init__(initial_state)

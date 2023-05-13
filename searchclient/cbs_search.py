@@ -99,14 +99,16 @@ def cbs_search(initial_state, frontier):
             print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
+                print("Not Fixed:", agent, file=sys.stderr)
             else:
                 plan = resolve_conflict(
                     agent, m.constraints[agent], initial_state, goals[agent]
                 )
                 m.solution[agent] = plan
                 print("Fixed:", agent, plan, file=sys.stderr)
-            frontier.add(m)
+                frontier.add(m)
         count += 1
+        print("____________________________________", file=sys.stderr)
     print(m.solution, file=sys.stderr)
 
 
