@@ -84,7 +84,6 @@ class State:
         return copy_state
 
     def is_goal_state(self, constraints) -> "bool":
-        # if constraints:#
         for row in range(len(self._goals)):
             for col in range(len(self._goals[row])):
                 goal = self._goals[row][col]
@@ -95,7 +94,24 @@ class State:
                     and self.agent_cols[ord(goal) - ord("0")] == col
                 ):
                     return False
-        return True
+        if constraints == set():
+            return True
+        max_time = max(constraint[1] for constraint in constraints)
+        print(constraints, file=sys.stderr)
+        print(self.get_visited_locations(max_time), file=sys.stderr)
+        print(constraints & self.get_visited_locations(max_time) == set(), file=sys.stderr)
+        return constraints & self.get_visited_locations(max_time) == set()
+
+    def get_visited_locations(self, max_time=None):
+        visited_locations = []
+        state = self
+        while state.parent is not None:
+            visited_locations.append(((state.agent_rows[0], state.agent_cols[0]), self.t))
+            state = state.parent
+        if max_time is not None:
+            last_location = visited_locations[0][0]
+            visited_locations += [(last_location, t) for t in range(self.t + 1, max_time + 1)]
+        return set(visited_locations)
 
     def get_expanded_states(self, constraints) -> "[State, ...]":
         num_agents = len(self.agent_rows)

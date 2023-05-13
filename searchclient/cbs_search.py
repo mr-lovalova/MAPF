@@ -6,6 +6,7 @@ from action import Action
 from queue import PriorityQueue
 import copy
 import sys
+from time import sleep
 
 
 class Root:
@@ -15,7 +16,7 @@ class Root:
         self.cost = 0
         self.constraints = [set() for _ in range(num_agents)]
 
-    def get_conflict(self) -> "bool" or "Conflict":
+    def get_conflict(self) -> "Conflict":
         longest_plan = len(max(self.solution, key=len))
         state = copy.deepcopy(self.initial_state)
         for step in range(longest_plan):
@@ -30,7 +31,7 @@ class Root:
             if conflicts:
                 return conflicts
             state = state.apply_action(joint_action)
-        return False
+        return None
 
     def extract_plan(self):
         solution = []
@@ -70,18 +71,20 @@ def cbs_search(initial_state, frontier):
                 row[count] = catch_goal(item, agent)
         sa_state = State(agent_row, agent_col, state.boxes, goal)
         goals.append(goal)
+        # print(f"Initial plan for agent: {agent}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
-    print("ROOT cost", root.cost, file=sys.stderr)
-    print("____________________________________", file=sys.stderr)
+    # print("ROOT cost", root.cost, file=sys.stderr)
+    # print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
-        print("COUNT", count, file=sys.stderr)
+        print("Count: ", count, file=sys.stderr)
         node = frontier.pop()
-        print("ROOT", node.count, '\n', file=sys.stderr)
+        # print("Root: ", node.count, file=sys.stderr)
         for i, solution in enumerate(node.solution):
-            print(i, solution, file=sys.stderr)
+            # print(i, solution, file=sys.stderr)
+            pass
         conflict = node.get_conflict()
         if not conflict:
             plan = node.extract_plan()
@@ -93,11 +96,12 @@ def cbs_search(initial_state, frontier):
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            print(agent, m.constraints, file=sys.stderr)
+            print(agent, m.constraints[agent], file=sys.stderr)
             plan = resolve_conflict(
                 agent, m.constraints[agent], initial_state, goals[agent]
             )
             m.solution[agent] = plan
+            print(agent, plan, file=sys.stderr)
             if not conflict.resolveable[agent]:
                 # manually adding follow constraint for time < 0
                 other_agent = conflict.agents[::-1][idx]
@@ -111,9 +115,8 @@ def cbs_search(initial_state, frontier):
                     goals[other_agent],
                 )
                 m.solution[other_agent] = plan
-
             frontier.add(m)
-        count = count + 1
+        count += 1
     print(m.solution, file=sys.stderr)
 
 
@@ -123,5 +126,6 @@ def resolve_conflict(agent, constraints, initial_state, goal):
         initial_state.agent_cols[agent]
     ]
     sa_state = State(agent_row, agent_col, initial_state.boxes, goal)
+    # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
     plan = search(sa_state, sa_frontier, constraints=constraints)
     return plan

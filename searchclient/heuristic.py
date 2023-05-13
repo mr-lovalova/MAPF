@@ -158,10 +158,6 @@ class Dijkstra():
         return distance_matrix
 
 
-
-
-
-
 class HeuristicAStar(Heuristic):
     def __init__(self, initial_state: 'State'):
         super().__init__(initial_state)

@@ -9,7 +9,7 @@ globals().update(Action.__members__)
 start_time = time.perf_counter()
 
 
-def search(initial_state, frontier, constraints=[]):
+def search(initial_state, frontier, constraints=set()):
     iterations = 0
 
     frontier.add(initial_state)
@@ -23,10 +23,9 @@ def search(initial_state, frontier, constraints=[]):
 
         if memory.get_usage() > memory.max_usage:
             # print_search_status(explored, frontier)
-            print("Maximum memory usage exceeded.", file=sys.stderr, flush=True)
+            # print("Maximum memory usage exceeded.", file=sys.stderr, flush=True)
             return None
 
-        # Your code here...
         if frontier.is_empty():
             return None
 
@@ -35,8 +34,10 @@ def search(initial_state, frontier, constraints=[]):
         # print(state, file=sys.stderr)
 
         if state.is_goal_state(constraints):
-            # print_search_status(explored, frontier)
             plan = state.extract_plan()
+            # print(state.get_visited_locations(), file=sys.stderr, flush=True)
+            # print(constraints, file=sys.stderr, flush=True)
+            # print(f"{plan}\n{constraints}\n{state.t}\n\n", file=sys.stderr, flush=True)
             return plan
 
         explored.add(state)
