@@ -97,25 +97,14 @@ def cbs_search(initial_state, frontier):
             m.count = count
             m.constraints[agent].update(constraints)
             print("Total:", agent, m.constraints[agent], file=sys.stderr)
-            plan = resolve_conflict(
-                agent, m.constraints[agent], initial_state, goals[agent]
-            )
-            m.solution[agent] = plan
-            print("Fixed:", agent, plan, file=sys.stderr)
             if not conflict.resolveable[agent]:
-                print("Manually added follow constraint", file=sys.stderr)
-                # manually adding follow constraint for time < 0
-                other_agent = conflict.agents[::-1][idx]
-                m.constraints[other_agent].update(
-                    {(conflict.conflict[2], conflict.conflict[3])}
-                )
+                plan = None
+            else:
                 plan = resolve_conflict(
-                    other_agent,
-                    m.constraints[other_agent],
-                    initial_state,
-                    goals[other_agent],
+                    agent, m.constraints[agent], initial_state, goals[agent]
                 )
-                m.solution[other_agent] = plan
+                m.solution[agent] = plan
+                print("Fixed:", agent, plan, file=sys.stderr)
             frontier.add(m)
         count += 1
     print(m.solution, file=sys.stderr)
