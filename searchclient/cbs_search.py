@@ -79,11 +79,11 @@ def cbs_search(initial_state, frontier):
     # print("ROOT cost", root.cost, file=sys.stderr)
     # print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
-        print("Count: ", count, file=sys.stderr)
+        print("Count:", count, file=sys.stderr)
         node = frontier.pop()
         # print("Root: ", node.count, file=sys.stderr)
         for i, solution in enumerate(node.solution):
-            # print(i, solution, file=sys.stderr)
+            print("Popped:", i, solution, file=sys.stderr)
             pass
         conflict = node.get_conflict()
         if not conflict:
@@ -91,18 +91,19 @@ def cbs_search(initial_state, frontier):
             return plan
         for idx, agent in enumerate(conflict.agents):
             constraints = conflict.constraints[agent]
-            print(agent, conflict.type, constraints, file=sys.stderr)
+            print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            print(agent, m.constraints[agent], file=sys.stderr)
+            print("Total:", agent, m.constraints[agent], file=sys.stderr)
             plan = resolve_conflict(
                 agent, m.constraints[agent], initial_state, goals[agent]
             )
             m.solution[agent] = plan
-            print(agent, plan, file=sys.stderr)
+            print("Fixed:", agent, plan, file=sys.stderr)
             if not conflict.resolveable[agent]:
+                print("Manually added follow constraint", file=sys.stderr)
                 # manually adding follow constraint for time < 0
                 other_agent = conflict.agents[::-1][idx]
                 m.constraints[other_agent].update(

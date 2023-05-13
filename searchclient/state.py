@@ -97,9 +97,9 @@ class State:
         if constraints == set():
             return True
         max_time = max(constraint[1] for constraint in constraints)
-        print(constraints, file=sys.stderr)
-        print(self.get_visited_locations(max_time), file=sys.stderr)
-        print(constraints & self.get_visited_locations(max_time) == set(), file=sys.stderr)
+        # print(constraints, file=sys.stderr)
+        # print(self.get_visited_locations(max_time), file=sys.stderr)
+        # print(constraints & self.get_visited_locations(max_time) == set(), file=sys.stderr)
         return constraints & self.get_visited_locations(max_time) == set()
 
     def get_visited_locations(self, max_time=None):
