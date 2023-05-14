@@ -47,45 +47,44 @@ class Root:
             solution.append(joint_action)
         return solution
 
-def get_goal_char(letter, letters):
-    if letter in letters:
-        if ord('0') <= ord(letter) <= ord('9'):
-            return "0"
+def catch_items(state, agent):
+    def get_goal_char(letter, letters):
+        if letter in letters:
+            if ord('0') <= ord(letter) <= ord('9'):
+                return "0"
+            else:
+                return letter
         else:
-            return letter
-    else:
-        return ""
+            return ""
 
-def catch_goals(state, agent):
-    n_rows, n_cols = len(state._goals), len(state._goals[0])
     agent_color = state.agent_colors[agent]
     letters = [chr(ord("0") + agent)] + [chr(ord('A') + i) for i in range(26) if state.box_colors[i] == agent_color]
+    boxes = [[c if c in letters else "" for c in row] for row in state.boxes]
     goal = [[get_goal_char(c, letters) for c in row] for row in state._goals]
-    print("GOAL", goal, file=sys.stderr)
-    return goal
+    return boxes, goal
 
 
 def cbs_search(initial_state, frontier):
     root = Root(len(initial_state.agent_rows))
     Root.initial_state = copy.deepcopy(initial_state)
     goals = []
+    boxes = []
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
-        goal = catch_goals(state, agent)
-        sa_state = State(agent_row, agent_col, state.boxes, goal)
-        goals.append(goal)
+        box, goal = catch_items(state, agent)
+        sa_state = State(agent_row, agent_col, box, goal)
+        print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
+        print("Goals:", agent, sa_state._goals, file=sys.stderr)
+        goals.append(goal); boxes.append(box)
         plan = search(sa_state, sa_frontier)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
-    # print("ROOT cost", root.cost, file=sys.stderr)
-    # print("____________________________________", file=sys.stderr)
     while not frontier.is_empty():
         print("Count:", count, file=sys.stderr)
         node = frontier.pop()
-        # print("Root: ", node.count, file=sys.stderr)
         for i, solution in enumerate(node.solution):
             print("Popped:", i, solution, file=sys.stderr)
             pass
@@ -105,7 +104,7 @@ def cbs_search(initial_state, frontier):
                 plan = None
             else:
                 plan = resolve_conflict(
-                    agent, m.constraints[agent], initial_state, goals[agent]
+                    agent, m.constraints[agent], initial_state, boxes[agent], goals[agent]
                 )
                 m.solution[agent] = plan
                 if plan:
@@ -113,15 +112,14 @@ def cbs_search(initial_state, frontier):
                     frontier.add(m)
         count += 1
         print("____________________________________", file=sys.stderr)
-    # print(m.solution, file=sys.stderr)
 
 
-def resolve_conflict(agent, constraints, initial_state, goal):
+def resolve_conflict(agent, constraints, initial_state, box, goal):
     sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
-    sa_state = State(agent_row, agent_col, initial_state.boxes, goal)
+    sa_state = State(agent_row, agent_col, box, goal)
     # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
     plan = search(sa_state, sa_frontier, constraints=constraints)
     return plan
