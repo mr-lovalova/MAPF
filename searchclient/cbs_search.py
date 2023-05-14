@@ -1,6 +1,6 @@
 from graphsearch import search
 from frontier import FrontierBestFirst
-from heuristic import HeuristicAStar
+from heuristic import HeuristicAStar, HeuristicDijkstra
 from state import State
 from action import Action
 from queue import PriorityQueue
@@ -71,12 +71,20 @@ def cbs_search(initial_state, frontier):
     goals = []
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
-        sa_frontier = FrontierBestFirst(HeuristicAStar(state))
+        state2 = copy.deepcopy(initial_state)#Copy2 to fit heuristic input
+        sa_frontier = FrontierBestFirst(HeuristicDijkstra(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         goal = catch_goals(state, agent)
+        #changing values in initial_state copy rather than make new State object as this loses the dijkstra map
+        state2.agent_rows = agent_row
+        state2.agent_cols = agent_col
+        state2.count = agent #indicates the current agent
+        state2._goals = goal
         sa_state = State(agent_row, agent_col, state.boxes, goal)
         goals.append(goal)
-        plan = search(sa_state, sa_frontier)
+        # print(f"Initial plan for agent: {agent}", file=sys.stderr)
+        # plan = search(sa_state, sa_frontier)
+        plan = search(state2, sa_frontier) #swapped sa_state for state2
         root.solution.append(plan)
     frontier.add(root)
     count = 0
@@ -96,7 +104,7 @@ def cbs_search(initial_state, frontier):
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
             print("New:", agent, conflict.type, constraints, file=sys.stderr)
-            sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+            sa_frontier = FrontierBestFirst(HeuristicDijkstra(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
@@ -117,11 +125,15 @@ def cbs_search(initial_state, frontier):
 
 
 def resolve_conflict(agent, constraints, initial_state, goal):
-    sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+    sa_frontier = FrontierBestFirst(HeuristicDijkstra(initial_state))
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
+    sa_state2 = copy.deepcopy(initial_state)
+    sa_state2.agent_rows = agent_row
+    sa_state2.agent_cols = agent_col
+    sa_state2._goals = goal
     sa_state = State(agent_row, agent_col, initial_state.boxes, goal)
     # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
-    plan = search(sa_state, sa_frontier, constraints=constraints)
+    plan = search(sa_state2, sa_frontier, constraints=constraints)
     return plan

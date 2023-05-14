@@ -89,9 +89,16 @@ class SearchClient:
 
             row += 1
             line = server_messages.readline()
-
+        #double dictionary; key is color, value is dict with agent number as key with col,row as value
+        agent_color_dic = {}
+        for i in range(len(agent_rows)):
+            if agent_colors[i] in agent_color_dic:
+                agent_color_dic[agent_colors[i]][str(i)] = (agent_cols[i],agent_rows[i])
+            else:
+                agent_color_dic[agent_colors[i]] = {str(i):(agent_cols[i],agent_rows[i])}
         # End.
         # line is currently "#end".
+        State.agent_color_dic = agent_color_dic
         State.agent_colors = agent_colors
         State.walls = walls
         State.box_colors = box_colors
