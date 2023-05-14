@@ -47,14 +47,22 @@ class Root:
             solution.append(joint_action)
         return solution
 
+def get_goal_char(letter, letters):
+    if letter in letters:
+        if ord('0') <= ord(letter) <= ord('9'):
+            return "0"
+        else:
+            return letter
+    else:
+        return ""
 
-def catch_goal(item, *agents):
-    try:
-        if int(item) not in agents:
-            return ""
-        return str(agents.index(int(item)))
-    except ValueError:
-        return item
+def catch_goals(state, agent):
+    n_rows, n_cols = len(state._goals), len(state._goals[0])
+    agent_color = state.agent_colors[agent]
+    letters = [chr(ord("0") + agent)] + [chr(ord('A') + i) for i in range(26) if state.box_colors[i] == agent_color]
+    goal = [[get_goal_char(c, letters) for c in row] for row in state._goals]
+    print("GOAL", goal, file=sys.stderr)
+    return goal
 
 
 def cbs_search(initial_state, frontier):
@@ -65,13 +73,9 @@ def cbs_search(initial_state, frontier):
         state = copy.deepcopy(initial_state)
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
-        goal = state._goals
-        for row in goal:
-            for count, item in enumerate(row):
-                row[count] = catch_goal(item, agent)
+        goal = catch_goals(state, agent)
         sa_state = State(agent_row, agent_col, state.boxes, goal)
         goals.append(goal)
-        # print(f"Initial plan for agent: {agent}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
         root.solution.append(plan)
     frontier.add(root)
@@ -89,7 +93,7 @@ def cbs_search(initial_state, frontier):
         if not conflict:
             plan = node.extract_plan()
             return plan
-        for idx, agent in enumerate(conflict.agents):
+        for agent in conflict.agents:
             constraints = conflict.constraints[agent]
             print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
@@ -99,17 +103,17 @@ def cbs_search(initial_state, frontier):
             print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
-                print("Not Fixed:", agent, file=sys.stderr)
             else:
                 plan = resolve_conflict(
                     agent, m.constraints[agent], initial_state, goals[agent]
                 )
                 m.solution[agent] = plan
-                print("Fixed:", agent, plan, file=sys.stderr)
-                frontier.add(m)
+                if plan:
+                    print("Fixed:", agent, plan, file=sys.stderr)
+                    frontier.add(m)
         count += 1
         print("____________________________________", file=sys.stderr)
-    print(m.solution, file=sys.stderr)
+    # print(m.solution, file=sys.stderr)
 
 
 def resolve_conflict(agent, constraints, initial_state, goal):
