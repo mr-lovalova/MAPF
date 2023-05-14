@@ -1,5 +1,4 @@
 import random
-import sys
 
 from action import Action, ActionType
 from conflict import Conflict
@@ -278,7 +277,6 @@ class State:
         return False
 
     def is_conflict(self, joint_action: "[Action, ...]", time):
-        num_agents = len(self.agent_rows)
         directions = ((1, 0), (-1, 0), (0, 1), (0, -1))
         num_agents = len(joint_action)
         blocked_agents = []
@@ -318,6 +316,12 @@ class State:
                 destination_rows[agent] = agent_row + action.agent_row_delta
                 destination_cols[agent] = agent_col + action.agent_col_delta
 
+            elif action.type is ActionType.Push:
+                destination_rows[agent] = agent_row + action.agent_row_delta
+                destination_cols[agent] = agent_col + action.agent_col_delta
+                box_rows[agent] = agent_row + action.agent_row_delta + action.box_row_delta
+                box_cols[agent] = agent_col + action.agent_col_delta + action.box_col_delta
+
         for a1 in range(num_agents):
             for a2 in range(a1 + 1, num_agents):
                 if (
@@ -356,6 +360,13 @@ class State:
                     conflict = Conflict.follow(
                         (a2, a1, (destination_rows[a2], destination_cols[a2]), time)
                     )
+                    return conflict
+
+                elif (
+                    box_rows[a1] == self.agent_rows[a2]
+                    and box_cols[a1] == self.agent_cols[a2]
+                ):
+                    conflict = None
                     return conflict
 
         return False
