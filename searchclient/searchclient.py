@@ -134,16 +134,12 @@ class SearchClient:
             sys.stdout.reconfigure(encoding="ASCII")
         print("SearchClient", flush=True)
 
-        # We can also print comments to stdout by prefixing with a #.
-        print("#This is a comment.", flush=True)
-
         # Parse the level.
         server_messages = sys.stdin
         if hasattr(server_messages, "reconfigure"):
             server_messages.reconfigure(encoding="ASCII")
         initial_state = SearchClient.parse_level(server_messages)
         initial_state.pre_processed_map = Dijkstra(initial_state).distance_matrix()
-
 
         # Select search strategy.
         frontier = None

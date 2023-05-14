@@ -3,11 +3,16 @@ import time
 import sys
 
 from action import Action
-
+from assigner import Assigner
+from preprocessing import Preprocessor
 globals().update(Action.__members__)
 
 start_time = time.perf_counter()
 
+# initial_state = Preprocessor(initial_state).preprocess()
+# plans = Assigner(initial_state).assign_plans()
+# for plan in plans:
+#     print(plan, file=sys.stderr, flush=True)
 
 def search(initial_state, frontier, constraints=set()):
     iterations = 0
