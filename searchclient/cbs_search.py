@@ -1,15 +1,17 @@
+import copy
+import sys
+
 from graphsearch import search
 from frontier import FrontierBestFirst
 from heuristic import HeuristicAStar
 from state import State
 from action import Action
-from queue import PriorityQueue
-import copy
-import sys
-from time import sleep
+from conflict import Conflict
 
 
 class Root:
+    initial_state = None
+
     def __init__(self, num_agents, count=0):
         self.count = count
         self.solution = []
@@ -47,6 +49,7 @@ class Root:
             solution.append(joint_action)
         return solution
 
+
 def catch_items(state, agent):
     def get_goal_char(letter, letters):
         if letter in letters:
@@ -75,8 +78,8 @@ def cbs_search(initial_state, frontier):
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
         sa_state = State(agent_row, agent_col, box, goal)
-        print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
-        print("Goals:", agent, sa_state._goals, file=sys.stderr)
+        # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
+        # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
         plan = search(sa_state, sa_frontier)
         root.solution.append(plan)
@@ -87,9 +90,8 @@ def cbs_search(initial_state, frontier):
         node = frontier.pop()
         for i, solution in enumerate(node.solution):
             print("Popped:", i, solution, file=sys.stderr)
-            pass
         conflict = node.get_conflict()
-        if not conflict:
+        if conflict is None:
             plan = node.extract_plan()
             return plan
         for agent in conflict.agents:
