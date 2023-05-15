@@ -83,27 +83,29 @@ def cbs_search(initial_state, frontier):
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
+        print(f"Initial search for agent {agent}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
+        print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
     while not frontier.is_empty():
-        print("Count:", count, file=sys.stderr)
+        # print("Count:", count, file=sys.stderr)
         node = frontier.pop()
-        for i, solution in enumerate(node.solution):
-            print("Popped:", i, solution, file=sys.stderr)
+        # for i, solution in enumerate(node.solution):
+            # print("Popped:", i, solution, file=sys.stderr)
         conflict = node.get_conflict()
         if conflict is None:
             plan = node.extract_plan()
             return plan
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
-            print("New:", agent, conflict.type, constraints, file=sys.stderr)
+            # print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            print("Total:", agent, m.constraints[agent], file=sys.stderr)
+            # print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
             else:
@@ -112,10 +114,10 @@ def cbs_search(initial_state, frontier):
                 )
                 m.solution[agent] = plan
                 if plan:
-                    print("Fixed:", agent, plan, file=sys.stderr)
+                    # print("Fixed:", agent, plan, file=sys.stderr)
                     frontier.add(m)
         count += 1
-        print("____________________________________", file=sys.stderr)
+        # print("____________________________________", file=sys.stderr)
 
 
 def resolve_conflict(agent, constraints, initial_state, box, goal):

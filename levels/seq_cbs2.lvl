@@ -1,0 +1,23 @@
+#domain
+hospital
+#levelname
+SEQ_CBS
+#colors
+blue: 0, A
+red: 1, B
+green: Z
+#initial
+++++++
++0 1 +
++    +
++AZBZ+
++ Z Z+
+++++++
+#goal
+++++++
++    +
++    +
++    +
++A B +
+++++++
+#end
