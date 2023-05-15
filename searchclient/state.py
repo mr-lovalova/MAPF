@@ -124,7 +124,7 @@ class State:
             ]
             for agent in range(num_agents)
         ]
-        print(f"Applicable actionsL {applicable_actions}", file=sys.stderr)
+        # print(f"Applicable actions: {applicable_actions}", file=sys.stderr)
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
         expanded_states = []

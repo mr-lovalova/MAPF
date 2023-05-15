@@ -5,19 +5,20 @@ SEQ_CBS
 #colors
 blue: 0, A
 red: 1, B
+pink: 2, C
 green: Z
 #initial
-++++++
-+0 1 +
-+    +
-+AZBZ+
-+ Z Z+
-++++++
++++++++
++0 1 2+
++     +
++AZBZC+
++ Z Z +
++++++++
 #goal
-++++++
-+    +
-+    +
-+    +
-+A B +
-++++++
++++++++
++0 1 2+
++     +
++ Z Z +
++AZBZC+
++++++++
 #end
