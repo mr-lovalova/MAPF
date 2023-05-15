@@ -105,7 +105,7 @@ class Assigner:
         self.state = initial_state
 
     def assign_tasks_to_agent(self, agent) -> tuple:
-        n_rows, n_cols = len(State.goals), len(State.goals[0])
+        n_rows, n_cols = len(self.state._goals), len(self.state._goals[0])
         agent_color = State.agent_colors[agent]
         letters = [chr(ord('A') + i) for i in range(26) if State.box_colors[i] == agent_color]
         floodfill = PathUtils(State.walls)
@@ -115,7 +115,7 @@ class Assigner:
             boxes[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state.boxes[row][col] == letter and reachability_map[row][col]]
         goals = {}
         for letter in letters + [chr(ord('0') + agent)]:
-            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if State.goals[row][col] == letter and reachability_map[row][col]]
+            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state._goals[row][col] == letter and reachability_map[row][col]]
 
         # print(f"Agent {agent} boxes: {boxes}", file=stderr, flush=True)
         # print(f"Agent {agent} goals: {goals}", file=stderr, flush=True)

@@ -8,6 +8,7 @@ from state import State
 from action import Action
 from conflict import Conflict
 from preprocessing import Preprocessor
+from assigner import Assigner
 
 
 class Root:
@@ -70,6 +71,8 @@ def catch_items(state, agent):
 
 def cbs_search(initial_state, frontier):
     initial_state = Preprocessor(initial_state).preprocess()
+    assigner = Assigner(initial_state)
+    print(assigner.assign_plans(), file=sys.stderr)
     root = Root(len(initial_state.agent_rows))
     Root.initial_state = copy.deepcopy(initial_state)
     goals = []
