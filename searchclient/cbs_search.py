@@ -68,20 +68,21 @@ def catch_items(state, agent):
     goal = [[get_goal_char(c, letters) for c in row] for row in state._goals]
     return boxes, goal
 
-def replace_colors(state: State) -> State:
+def replace_colors(state: State, agent: int) -> State:
     """
-    Replaces all agents and box colors with that of the first color. This only works when the first agent is agent 0 and it has box A.
+    ...
     """
+    agent_color = state.agent_colors[agent]
+    print(f"switching box colors for agent {agent} with color {agent_color}", file=sys.stderr)
+
     first_box_color = state.box_colors[0]
+    print(f"agent {agent} with color {agent_color}", file=sys.stderr)
     for i in range(len(state.box_colors)):
-        if state.box_colors[i] is not None:
+        print(f"COMPARE COLORS: {state.box_colors[i]} c {agent_color}", file=sys.stderr)
+        if state.box_colors[i] is not agent_color:
+            state.box_colors[i] = None
+        else:
             state.box_colors[i] = first_box_color
-
-    first_agent_color = state.agent_colors[0]
-    for i in range(len(state.agent_colors)):
-        if state.agent_colors[i] is not None:
-            state.agent_colors[i] = first_agent_color
-
     return state
 
 def cbs_search(initial_state, frontier):
@@ -94,7 +95,7 @@ def cbs_search(initial_state, frontier):
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
-        sa_state = replace_colors(State(agent_row, agent_col, box, goal))
+        sa_state = replace_colors(State(agent_row, agent_col, box, goal), agent)
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
