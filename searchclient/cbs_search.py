@@ -69,9 +69,6 @@ def catch_items(state, agent):
     return boxes, goal
 
 def replace_colors(state: State, agent: int) -> State:
-    """
-    ...
-    """
     agent_color = state.agent_colors[agent]
     print(f"switching box colors for agent {agent} with color {agent_color}", file=sys.stderr)
 
