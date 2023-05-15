@@ -7,6 +7,7 @@ from heuristic import HeuristicAStar
 from state import State
 from action import Action
 from conflict import Conflict
+from preprocessing import Preprocessor
 
 
 class Root:
@@ -68,6 +69,7 @@ def catch_items(state, agent):
 
 
 def cbs_search(initial_state, frontier):
+    initial_state = Preprocessor(initial_state).preprocess()
     root = Root(len(initial_state.agent_rows))
     Root.initial_state = copy.deepcopy(initial_state)
     goals = []

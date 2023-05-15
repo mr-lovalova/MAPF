@@ -9,11 +9,6 @@ globals().update(Action.__members__)
 
 start_time = time.perf_counter()
 
-# initial_state = Preprocessor(initial_state).preprocess()
-# plans = Assigner(initial_state).assign_plans()
-# for plan in plans:
-#     print(plan, file=sys.stderr, flush=True)
-
 def search(initial_state, frontier, constraints=set()):
     iterations = 0
 
