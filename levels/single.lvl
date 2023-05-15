@@ -1,17 +1,17 @@
 #domain
 hospital
 #levelname
-single_multi
+single
 #colors
 blue: 0, A, B, C, D
 #initial
 ++++++++++++++
-+ 0      ABCD+
++ 0      A   +
 +            +
 +            +
 +            +
 +        +++++
-+            +
++       B    +
 ++++++++++++++
 #goal
 ++++++++++++++
@@ -20,6 +20,6 @@ blue: 0, A, B, C, D
 +            +
 +            +
 +        +++++
-+        ABCD+
++        A   +
 ++++++++++++++
 #end

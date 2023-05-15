@@ -13,7 +13,7 @@ from conflict import Conflict
 from frontier import FrontierBFS, FrontierDFS, FrontierBestFirst, CBSQueue
 from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy, HeuristicDijkstra, Dijkstra
 from graphsearch import search
-from cbs_search import cbs_search
+from cbs_search import cbs_search, sequential_cbs
 
 
 class SearchClient:
@@ -155,8 +155,8 @@ class SearchClient:
             )
         elif args.greedy:
             frontier = FrontierBestFirst(HeuristicGreedy(initial_state))
-        elif args.cbs:
-            frontier = CBSQueue()
+        # elif args.cbs:
+        #     frontier = CBSQueue()
         else:
             # Default to BFS search.
             frontier = FrontierBFS()
@@ -169,7 +169,7 @@ class SearchClient:
         # Search for a plan.
         print("Starting {}.".format(frontier.get_name()), file=sys.stderr, flush=True)
         if args.cbs:
-            plan = cbs_search(initial_state, frontier)
+            plan = sequential_cbs(initial_state)
         else:
             plan = search(initial_state, frontier)
 

@@ -2,7 +2,7 @@ import copy
 import sys
 
 from graphsearch import search
-from frontier import FrontierBestFirst
+from frontier import FrontierBestFirst, CBSQueue
 from heuristic import HeuristicAStar
 from state import State
 from action import Action
@@ -70,9 +70,6 @@ def catch_items(state, agent):
 
 
 def cbs_search(initial_state, frontier):
-    initial_state = Preprocessor(initial_state).preprocess()
-    assigner = Assigner(initial_state)
-    print(assigner.assign_plans(), file=sys.stderr)
     root = Root(len(initial_state.agent_rows))
     Root.initial_state = copy.deepcopy(initial_state)
     goals = []
@@ -130,3 +127,19 @@ def resolve_conflict(agent, constraints, initial_state, box, goal):
     # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
     plan = search(sa_state, sa_frontier, constraints=constraints)
     return plan
+
+
+def get_final_state(initial_state, plan):
+    state = copy.deepcopy(initial_state)
+    for joint_action in plan:
+        state = state.apply_action(joint_action)
+    return state
+
+
+def sequential_cbs(initial_state):
+    state = Preprocessor(initial_state).preprocess()
+    assigner = Assigner(state)
+    print(assigner.assign_plans(), file=sys.stderr)
+    plann = cbs_search(state, CBSQueue())
+    print(get_final_state(state, plann), file=sys.stderr)
+    return plann
