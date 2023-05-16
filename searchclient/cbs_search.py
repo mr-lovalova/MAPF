@@ -89,6 +89,7 @@ def cbs_search(initial_state, frontier):
     boxes = []
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
+        print(f"Initial state: {state}", file=sys.stderr)
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
