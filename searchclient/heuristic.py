@@ -4,6 +4,8 @@ import math
 import heapq
 
 class Heuristic(metaclass=ABCMeta):
+    assigned_boxes = []
+    assigned_goals = []
     def __init__(self, initial_state: 'State'):
         # Here's a chance to pre-process the static parts of the level.
         #self.x_goal
@@ -15,39 +17,142 @@ class Heuristic(metaclass=ABCMeta):
         self.map = initial_state.pre_processed_map
 
     def h(self, state) -> 'int':
-        # row = state.agent_rows
-        # col = state.agent_cols
-        # agent_colors = state.agent_colors
-        # box_loc = state.boxes
-        # box_colors = state.box_colors
-        # goals = state._goals
-        #
-        # agent_to_box_h = 0
-        # box_to_goal_h = 0
-        # box_pos_col = {}
-        # #agent to box distances
-        # for i, rows in enumerate(box_loc):
-        #     for j, cols in enumerate(rows):
-        #         if cols != '':
-        #             box_color = box_colors[ord(cols)-65]
-        #             box_pos = (j,i)
-        #             box_pos_col[cols] = (j,i)
-        #             agent = [i.value for i in agent_colors if i == box_color]
-        #             agent_pos = (col[agent[0]],row[agent[0]])
+
+        agent_row = state.agent_rows
+        # print(agent_row,file=sys.stderr)
+        agent_col = state.agent_cols
+
+        agent_to_box_h = 0
+        box_to_goal_h = 0
+        find_agent = None
+        find_boxes = {}
+
+        #agent to boxes h if only checking one agent at a time. Checks all boxes not just assigned ones atm
+        if len(agent_row) == 1:
+            for row_pos, row in enumerate(state.boxes):
+                for col_pos, col in enumerate(row):
+                    if col != '':
+                        find_boxes[col] = (col_pos, row_pos)
+                        print(find_boxes,file=sys.stderr)
+                        box_pos = (col_pos, row_pos)
+                        agent_pos = (agent_col[0],agent_row[0])
+                        agent_to_box_h+=self.map[agent_pos][box_pos]
+                        # print("loop1",agent_to_box_h,file=sys.stderr)
+
+        elif len(agent_row) > 1:
+            print("DSFDASFJASDF",len(agent_row,file=sys.stderr))
+            for agent, agent_dic in enumerate(self.assigned_boxes):
+                for letter in agent_dic[0]:
+                    if len(agent_dic[0][letter]) > 0:
+                        find_boxes[col] = (col_pos, row_pos)
+                        box_pos = (agent_dic[0][letter][0][1],agent_dic[0][letter][0][0])
+                        agent_pos = (col[agent],row[agent])
+                        agent_to_box_h+=self.map[agent_pos][box_pos]
+                        print("loop2",agent_to_box_h,file=sys.stderr)
+        #box to goal len == 1
+        elif len(agent_row) == 0:
+            return print("wtf",file=sys.stderr)  
+                      
+        for row, rows in enumerate(state._goals):
+            for col, cols in enumerate(rows):
+                if cols != '' and "A" <= cols <= "Z":
+                    box_pos = find_boxes[cols]
+                    goal_pos = (col,row)
+                    box_to_goal_h+=self.map[goal_pos][box_pos]
+        #agent to goal len == 1
+        for row, rows in enumerate(state._goals):
+            for col, cols in enumerate(rows):
+                if cols != '' and "0" <= cols <= "9":
+                    goal_pos = (col,row)
+                    print("last loop",find_boxes,file=sys.stderr)
+                    agent_pos = find_boxes[find_boxes.keys()[-1]]
+                    box_to_goal_h+=self.map[goal_pos][box_pos]
+        print(box_to_goal_h,file=sys.stderr)
+
+        # if state.agent_numb is not None:
+        #     agent_pos = (col[0],row[0])
+        #     letters = self.assigned_boxes[state.agent_numb]
+        #     for letter in letters[0]:
+        #         if len(letters[0][letter])>0:
+        #             box_pos = (letters[0][letter][0][1],letters[0][letter][0][0])
         #             agent_to_box_h+=self.map[agent_pos][box_pos]
-        #
-        #
-        # #box to goal distances - includes initial agent location to agent goal if needed
-        # for i, rows in enumerate(goals):
-        #     for j, cols in enumerate(rows):
-        #         if cols != '' and cols in box_pos_col:
-        #             goal_pos = (j,i)
-        #             box_pos = box_pos_col[cols]
-        #             box_to_goal_h+=self.map[goal_pos][box_pos]
-        #         elif cols != '':
-        #             goal_pos = (j,i)
-        #             agent_pos = (col[int(cols)],row[int(cols)])
-        #             box_to_goal_h+=self.map[goal_pos][agent_pos]
+        # elif find_agent:
+        #     for agent, agent_dic in enumerate(self.assigned_boxes):
+        #             for letter in agent_dic[0]:
+        #                 if len(agent_dic[0][letter]) > 0:
+        #                     box_pos = (agent_dic[0][letter][0][1],agent_dic[0][letter][0][0])
+        #                     agent_pos = (col[agent],row[agent])
+        #                     agent_to_box_h+=self.map[agent_pos][box_pos]
+
+        
+        #box to goal h
+                     
+        # try:
+        #     if len(row) > 1:
+        #         for agent, agent_dic in enumerate(self.assigned_boxes):
+        #             for letter in agent_dic:
+        #                 if len(agent_dic[letter]) > 0:
+        #                     box_pos = (agent_dic[letter][0][1],agent_dic[letter][0][0])
+        #                     agent_pos = (col[agent],row[agent])
+        #                     print("BOX POSITION",box_pos,file=sys.stderr)
+        #                     print("AGENT POSITION",agent_pos,file=sys.stderr)
+        #                     agent_to_box_h+=self.map[agent_pos][box_pos]
+        #                 else:
+        #                     continue
+        # except:
+
+            
+
+        
+        
+        # if state.count is None: #Checking initial state
+        #     #agent to box distances
+        #     for i, rows in enumerate(box_loc):
+        #         for j, cols in enumerate(rows):
+        #             if cols != '':
+        #                 box_color = box_colors[ord(cols)-65]
+        #                 box_pos = (j,i)
+        #                 box_pos_col[cols] = (j,i)
+        #                 # if box_color in agent_color_dic:
+
+        #                 for ind, k in enumerate(agent_colors):
+        #                     if k == box_color:
+        #                         agent_pos = agent_color_dic[box_color][str(ind)]
+        #                         agent_to_box_h+=self.map[agent_pos][box_pos]
+        #     #box to goal distances - includes initial agent location to agent goal if needed
+        #     for i, rows in enumerate(goals):
+        #         for j, cols in enumerate(rows):
+        #             if cols != '' and cols in box_pos_col:
+        #                 goal_pos = (j,i)
+        #                 box_pos = box_pos_col[cols]
+        #                 box_to_goal_h+=self.map[goal_pos][box_pos]
+        #             elif cols != '':
+        #                 goal_pos = (j,i)
+        #                 agent_pos = (col[int(cols)],row[int(cols)])
+        #                 box_to_goal_h+=self.map[goal_pos][agent_pos]
+        # else: #Checking state for one agent at a time
+        #     agent_color = agent_colors[state.count]
+        #     for i, rows in enumerate(box_loc):
+        #         for j, cols in enumerate(rows):
+        #             if cols != '':
+        #                 box_color = box_colors[ord(cols)-65]
+        #                 if agent_color == box_color:
+        #                     agent_pos = (col[0],row[0])
+        #                     box_pos = (j,i)
+        #                     box_pos_col[cols] = (j,i)
+        #                     agent_to_box_h+=self.map[agent_pos][box_pos]             
+        #     #box to goal distances - includes initial agent location to agent goal if needed
+        #     for i, rows in enumerate(goals):
+        #         for j, cols in enumerate(rows):
+        #             if cols != '' and cols in box_pos_col:
+        #                 goal_pos = (j,i)
+        #                 box_pos = box_pos_col[cols]
+        #                 box_to_goal_h+=self.map[goal_pos][box_pos]
+        #             elif cols != '':
+        #                 goal_pos = (j,i)
+        #                 agent_pos = (col[0],row[0])
+        #                 box_to_goal_h+=self.map[goal_pos][agent_pos]
+
         # # print(agent_to_box_h+box_to_goal_h,file=sys.stderr)
         # return agent_to_box_h+box_to_goal_h
         return 0
@@ -169,7 +274,7 @@ class HeuristicAStar(Heuristic):
         super().__init__(initial_state)
 
     def f(self, state: 'State') -> 'int':
-        return state.g + self.h(state)
+        return 0
 
     def __repr__(self):
         return 'A* evaluation'

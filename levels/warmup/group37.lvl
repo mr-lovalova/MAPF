@@ -1,0 +1,53 @@
+#domain
+hospital
+#levelname
+Group37
+#colors
+red: 0, 1, 8, A, B, C, D, E, F
+blue: 2, 7, 9, G, H, I, J, K, L
+green: 3, 5, M, N, O, P, Q, R, S
+pink: 4, 6, T, U, V, W, X, Y
+purple: Z
+#initial
++++++++++++++++++++++++++++++++++++++++++++++++++
++67                 50+ 12                    34+
++ZZZZZZZZZZ  ZZZZZZZZZ+  MNOPQRS        ABCDEF  +
++                     +  TUVWXY         GHIJKL  +
++                     +                         +
++               TUVWXY+    Z Z Z       Z Z Z    +
++               GHIJKL+    Z Z Z       Z Z Z    +
++               ABCDEF+    Z Z Z       Z Z Z    +
++              MNOPQRS+    Z Z Z       Z Z Z    +
++                     +    Z Z Z       Z Z Z    +
++                     +    Z Z Z       Z Z Z    +                     
++   ZZZZZZZZZZZZZZZZZZ+    Z Z Z       Z Z Z    +
++                     +    Z Z Z       Z Z Z    +
++   ZZZZZZZZZZZZZZZZZZ+    Z Z Z       Z Z Z    +
++                     +++++++++++++++++++++++++++
++   ZZZZZZZZZZZZZZZZZZ+                      8  +
++                     +ZZZZZZZZZZZZZZ  GHIJ     +
++   ZZZZZZZZZZZZZZZZZZ+ZZZZZZZZZZZZZZ  ABCD     +
++                     +                      9  +
++++++++++++++++++++++++++++++++++++++++++++++++++
+#goal
++++++++++++++++++++++++++++++++++++++++++++++++++
++67                 50+                         +
++                     +                         +
++                     +                         +
++                     +                         +
++                     +                         +
++                     +                         +
++                     +                   M     +
++                     +     F L         T N     +
++                     +     E K         U O     +
++                     +     D J         V P     +                     
++                     +     C I         W Q     +
++               FEDCBA+     B H         X R     +
++                     + 43  A G         Y S  21 +
++              SRQPONM+++++++++++++++++++++++++++
++                     +ABCD                     +
++               YXWVOT+               8         +
++                     +               9         +
++               LKJIHG+GHIJ                     +
++++++++++++++++++++++++++++++++++++++++++++++++++
+#end

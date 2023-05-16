@@ -36,6 +36,7 @@ class State:
         self.g = 0
         self.t = 0
         self._hash = None
+        self.agent_numb = None
 
     def apply_action(self, joint_action: "[Action, ...]") -> "State":
         """

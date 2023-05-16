@@ -3,7 +3,7 @@ import sys
 
 from graphsearch import search
 from frontier import FrontierBestFirst, CBSQueue
-from heuristic import HeuristicAStar
+from heuristic import HeuristicAStar, HeuristicDijkstra
 from state import State
 from action import Action
 from conflict import Conflict
@@ -76,10 +76,11 @@ def cbs_search(initial_state, frontier):
     boxes = []
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
-        sa_frontier = FrontierBestFirst(HeuristicAStar(state))
+        sa_frontier = FrontierBestFirst(HeuristicDijkstra(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
         sa_state = State(agent_row, agent_col, box, goal)
+        sa_state.agent_numb = agent
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
@@ -99,7 +100,7 @@ def cbs_search(initial_state, frontier):
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
             print("New:", agent, conflict.type, constraints, file=sys.stderr)
-            sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+            sa_frontier = FrontierBestFirst(HeuristicDijkstra(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
@@ -119,7 +120,7 @@ def cbs_search(initial_state, frontier):
 
 
 def resolve_conflict(agent, constraints, initial_state, box, goal):
-    sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+    sa_frontier = FrontierBestFirst(HeuristicDijkstra(initial_state))
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
@@ -139,7 +140,9 @@ def get_final_state(initial_state, plan):
 def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
     assigner = Assigner(state)
-    print(assigner.assign_plans(), file=sys.stderr)
+    assigner.assign_plans()
+    # print("ASSIGNER HERE",assigner.assign_plans(), file=sys.stderr)
     plann = cbs_search(state, CBSQueue())
-    print(get_final_state(state, plann), file=sys.stderr)
+    # print(get_final_state(state, plann), file=sys.stderr)
+    get_final_state(state, plann)
     return plann
