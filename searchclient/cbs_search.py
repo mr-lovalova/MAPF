@@ -9,7 +9,7 @@ from state import State
 from action import Action
 from conflict import Conflict
 from preprocessing import Preprocessor
-from assigner import Assigner
+from assigner import Assigner, PathUtils
 
 
 class Root:
@@ -64,9 +64,12 @@ def catch_items(state, agent):
             return ""
 
     agent_color = state.agent_colors[agent]
+    floodfill = PathUtils(State.walls)
+    reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))
     letters = [chr(ord("0") + agent)] + [chr(ord('A') + i) for i in range(26) if state.box_colors[i] == agent_color]
-    boxes = [[c if c in letters else "" for c in row] for row in state.boxes]
-    goal = [[get_goal_char(c, letters) for c in row] for row in state._goals]
+    boxes = [[state.boxes[row][col] if state.boxes[row][col] in letters and reachability_map[row][col] else "" for col in range(len(state.boxes[0]))] for row in range(len(state.boxes))]
+    goal = [[get_goal_char(state._goals[row][col], letters) if reachability_map[row][col] else "" for col in range(len(state.boxes[0]))] for row in range(len(state.boxes))]
+    print(f"boxes: {boxes} goals: {goal} agent: {agent}", file=sys.stderr)
     return boxes, goal
 
 def replace_colors(state: State, agent: int) -> State:
@@ -96,7 +99,7 @@ def cbs_search(initial_state, frontier):
         goals.append(goal); boxes.append(box)
         # print(f"Initial search for agent {agent} of color {state.agent_colors[agent]} with boxes {state.box_colors}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
-        # print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
+        print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
@@ -153,6 +156,7 @@ def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
     assigner = Assigner(state)
     agent_tasks = [task[1:-1] for task in assigner.assign_plans()]
+    print(agent_tasks, file=sys.stderr)
     initial_state_goals = copy.deepcopy(initial_state._goals)
     boxes = copy.deepcopy(initial_state.boxes)
     plan = []
