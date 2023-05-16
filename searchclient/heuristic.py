@@ -12,7 +12,8 @@ class Heuristic(metaclass=ABCMeta):
         #for row in initial_state._g:
         #    for col in row:
         #        for
-        self.map = initial_state.pre_processed_map
+        # self.map = initial_state.pre_processed_map
+        pass
 
     def h(self, state) -> 'int':
         # row = state.agent_rows

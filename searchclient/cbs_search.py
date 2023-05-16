@@ -1,5 +1,6 @@
 import copy
 import sys
+import traceback
 
 from graphsearch import search
 from frontier import FrontierBestFirst, CBSQueue
@@ -69,18 +70,15 @@ def catch_items(state, agent):
     return boxes, goal
 
 def replace_colors(state: State, agent: int) -> State:
-    agent_color = state.agent_colors[agent]
-    print(f"switching box colors for agent {agent} with color {agent_color}", file=sys.stderr)
-
+    updated_state = copy.deepcopy(state)
+    agent_color = copy.deepcopy(state.agent_colors[agent])
     first_box_color = state.box_colors[0]
-    print(f"agent {agent} with color {agent_color}", file=sys.stderr)
     for i in range(len(state.box_colors)):
-        print(f"COMPARE COLORS: {state.box_colors[i]} c {agent_color}", file=sys.stderr)
         if state.box_colors[i] is not agent_color:
-            state.box_colors[i] = None
+            updated_state.box_colors[i] = None
         else:
-            state.box_colors[i] = first_box_color
-    return state
+            updated_state.box_colors[i] = first_box_color
+    return updated_state
 
 def cbs_search(initial_state, frontier):
     root = Root(len(initial_state.agent_rows))
@@ -96,29 +94,29 @@ def cbs_search(initial_state, frontier):
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
-        print(f"Initial search for agent {agent}", file=sys.stderr)
+        # print(f"Initial search for agent {agent} of color {state.agent_colors[agent]} with boxes {state.box_colors}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
-        print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
+        # print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
     while not frontier.is_empty():
-        # print("Count:", count, file=sys.stderr)
+        print("Count:", count, file=sys.stderr)
         node = frontier.pop()
-        # for i, solution in enumerate(node.solution):
-            # print("Popped:", i, solution, file=sys.stderr)
+        for i, solution in enumerate(node.solution):
+            print("Popped:", i, solution, file=sys.stderr)
         conflict = node.get_conflict()
         if conflict is None:
             plan = node.extract_plan()
             return plan
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
-            # print("New:", agent, conflict.type, constraints, file=sys.stderr)
+            print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            # print("Total:", agent, m.constraints[agent], file=sys.stderr)
+            print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
             else:
@@ -127,7 +125,7 @@ def cbs_search(initial_state, frontier):
                 )
                 m.solution[agent] = plan
                 if plan:
-                    # print("Fixed:", agent, plan, file=sys.stderr)
+                    print("Fixed:", agent, plan, file=sys.stderr)
                     frontier.add(m)
         count += 1
         # print("____________________________________", file=sys.stderr)
@@ -154,7 +152,33 @@ def get_final_state(initial_state, plan):
 def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
     assigner = Assigner(state)
-    print(assigner.assign_plans(), file=sys.stderr)
-    plann = cbs_search(state, CBSQueue())
-    print(get_final_state(state, plann), file=sys.stderr)
-    return plann
+    agent_tasks = [task[1:-1] for task in assigner.assign_plans()]
+    initial_state_goals = copy.deepcopy(initial_state._goals)
+    boxes = copy.deepcopy(initial_state.boxes)
+    plan = []
+    max_task_length = max([len(task) for task in agent_tasks])  
+    for i in range(max_task_length):
+        goals = [["" for col in range(len(initial_state.boxes[0]))] for row in range(len(initial_state.boxes))]
+        for j, agent_task in enumerate(agent_tasks):
+            try:
+                task = agent_task[i]
+                goals = [[task.letter if task.position == (row, col) else goals[row][col] for col in range(len(initial_state.walls[0]))] for row in range(len(initial_state.walls))]
+            except IndexError as e:
+                # traceback.print_exc()
+                # print(f"Index Error in seq_cbs, error: {e}", file=sys.stderr)
+                pass
+        # print(f"goals: {goals}", file=sys.stderr)
+        state._goals = goals
+        plan += cbs_search(state, CBSQueue())
+        print(plan, file=sys.stderr)
+        state = get_final_state(initial_state, plan)
+        boxes = state.boxes
+        for row in range(len(boxes)):
+            for col in range(len(boxes[0])):
+                if boxes[row][col] == initial_state_goals[row][col]:
+                    boxes[row][col] = ""
+        state.boxes = boxes
+        print(boxes, file=sys.stderr)
+    print(plan, file=sys.stderr)
+    print(get_final_state(state, plan), file=sys.stderr)
+    return plan

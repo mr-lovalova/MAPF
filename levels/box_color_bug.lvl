@@ -1,7 +1,7 @@
 #domain
 hospital
 #levelname
-SEQ_CBS
+BOX_COLOR_BUG
 #colors
 blue: 0, A
 red: 1, B
@@ -9,14 +9,16 @@ pink: 2, C
 green: Z
 #initial
 +++++++
-+0 1 2+
++1+0 2+
++     +
 +     +
 +AZBZC+
 + Z Z +
 +++++++
 #goal
 +++++++
-+0 1 2+
++0+1 2+
++     +
 +     +
 +     +
 +A B C+
