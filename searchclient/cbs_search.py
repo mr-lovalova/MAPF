@@ -53,7 +53,7 @@ class Root:
         return solution
 
 
-def catch_items(state, agent):
+def catch_items(state, agent, reachability_maps):
     def get_goal_char(letter, letters):
         if letter in letters:
             if ord('0') <= ord(letter) <= ord('9'):
@@ -63,14 +63,14 @@ def catch_items(state, agent):
         else:
             return ""
 
+    reachability_map = reachability_maps[agent]
     agent_color = state.agent_colors[agent]
-    floodfill = PathUtils(State.walls)
-    reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))
     letters = [chr(ord("0") + agent)] + [chr(ord('A') + i) for i in range(26) if state.box_colors[i] == agent_color]
     boxes = [[state.boxes[row][col] if state.boxes[row][col] in letters and reachability_map[row][col] else "" for col in range(len(state.boxes[0]))] for row in range(len(state.boxes))]
     goal = [[get_goal_char(state._goals[row][col], letters) if reachability_map[row][col] else "" for col in range(len(state.boxes[0]))] for row in range(len(state.boxes))]
-    print(f"boxes: {boxes} goals: {goal} agent: {agent}", file=sys.stderr)
+    # print(f"boxes: {boxes} goals: {goal} agent: {agent}", file=sys.stderr)
     return boxes, goal
+
 
 def replace_colors(state: State, agent: int) -> State:
     updated_state = copy.deepcopy(state)
@@ -83,7 +83,8 @@ def replace_colors(state: State, agent: int) -> State:
             updated_state.box_colors[i] = first_box_color
     return updated_state
 
-def cbs_search(initial_state, frontier):
+
+def cbs_search(initial_state, frontier, reachability_maps):
     root = Root(len(initial_state.agent_rows))
     Root.initial_state = copy.deepcopy(initial_state)
     goals = []
@@ -92,34 +93,35 @@ def cbs_search(initial_state, frontier):
         state = copy.deepcopy(initial_state)
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
-        box, goal = catch_items(state, agent)
+        box, goal = catch_items(state, agent, reachability_maps)
         sa_state = replace_colors(State(agent_row, agent_col, box, goal, initial_state.box_colors), agent)
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
         # print(f"Initial search for agent {agent} of color {state.agent_colors[agent]} with boxes {state.box_colors}", file=sys.stderr)
         plan = search(sa_state, sa_frontier)
-        print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
+        # print(f"Initial plan for agent {agent}: {plan}", file=sys.stderr)
         root.solution.append(plan)
     frontier.add(root)
     count = 0
     while not frontier.is_empty():
-        print("Count:", count, file=sys.stderr)
+        # print("Count:", count, file=sys.stderr)
         node = frontier.pop()
         for i, solution in enumerate(node.solution):
-            print("Popped:", i, solution, file=sys.stderr)
+            # print("Popped:", i, solution, file=sys.stderr)
+            pass
         conflict = node.get_conflict()
         if conflict is None:
             plan = node.extract_plan()
             return plan
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
-            print("New:", agent, conflict.type, constraints, file=sys.stderr)
+            # print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            print("Total:", agent, m.constraints[agent], file=sys.stderr)
+            # print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
             else:
@@ -128,7 +130,7 @@ def cbs_search(initial_state, frontier):
                 )
                 m.solution[agent] = plan
                 if plan:
-                    print("Fixed:", agent, plan, file=sys.stderr)
+                    # print("Fixed:", agent, plan, file=sys.stderr)
                     frontier.add(m)
         count += 1
         # print("____________________________________", file=sys.stderr)
@@ -154,6 +156,9 @@ def get_final_state(initial_state, plan):
 
 def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
+    floodfill = PathUtils(State.walls)
+    reachability_maps = [floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent])) for agent in range(len(initial_state.agent_rows))]
+    # reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))
     assigner = Assigner(state)
     agent_tasks = [task[1:-1] for task in assigner.assign_plans()]
     print(agent_tasks, file=sys.stderr)
@@ -173,7 +178,7 @@ def sequential_cbs(initial_state):
                 pass
         # print(f"goals: {goals}", file=sys.stderr)
         state._goals = goals
-        plan += cbs_search(state, CBSQueue())
+        plan += cbs_search(state, CBSQueue(), reachability_maps)
         print(plan, file=sys.stderr)
         state = get_final_state(initial_state, plan)
         boxes = state.boxes
