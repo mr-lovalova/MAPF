@@ -1,6 +1,6 @@
 import collections
 from sys import stderr
-
+from heuristic import HeuristicDijkstra
 from state import State
 
 class PathUtils:
@@ -117,6 +117,8 @@ class Assigner:
         for letter in letters + [chr(ord('0') + agent)]:
             goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state._goals[row][col] == letter and reachability_map[row][col]]
 
+        HeuristicDijkstra.assigned_boxes.append(boxes)
+        HeuristicDijkstra.assigned_goals.append(goals)
         # print(f"Agent {agent} boxes: {boxes}", file=stderr, flush=True)
         # print(f"Agent {agent} goals: {goals}", file=stderr, flush=True)
         return boxes, goals

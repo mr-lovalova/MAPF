@@ -3,11 +3,11 @@ import sys
 
 from graphsearch import search
 from frontier import FrontierBestFirst, CBSQueue
-from heuristic import HeuristicAStar
+from heuristic import HeuristicAStar, HeuristicDijkstra
 from state import State
 from action import Action
 from conflict import Conflict
-from preprocessing import Preprocessor
+from preprocessing import Preprocessor, Dijkstra
 from assigner import Assigner
 
 
@@ -70,12 +70,12 @@ def catch_items(state, agent):
 
 def replace_colors(state: State, agent: int) -> State:
     agent_color = state.agent_colors[agent]
-    print(f"switching box colors for agent {agent} with color {agent_color}", file=sys.stderr)
+    # print(f"switching box colors for agent {agent} with color {agent_color}", file=sys.stderr)
 
     first_box_color = state.box_colors[0]
-    print(f"agent {agent} with color {agent_color}", file=sys.stderr)
+    # print(f"agent {agent} with color {agent_color}", file=sys.stderr)
     for i in range(len(state.box_colors)):
-        print(f"COMPARE COLORS: {state.box_colors[i]} c {agent_color}", file=sys.stderr)
+        # print(f"COMPARE COLORS: {state.box_colors[i]} c {agent_color}", file=sys.stderr)
         if state.box_colors[i] is not agent_color:
             state.box_colors[i] = None
         else:
@@ -90,7 +90,7 @@ def cbs_search(initial_state, frontier):
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
         print(f"Initial state: {state}", file=sys.stderr)
-        sa_frontier = FrontierBestFirst(HeuristicAStar(state))
+        sa_frontier = FrontierBestFirst(HeuristicDijkstra())
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
         sa_state = replace_colors(State(agent_row, agent_col, box, goal, copy.deepcopy(state.box_colors)), agent)
@@ -115,7 +115,7 @@ def cbs_search(initial_state, frontier):
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
             # print("New:", agent, conflict.type, constraints, file=sys.stderr)
-            sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+            sa_frontier = FrontierBestFirst(HeuristicDijkstra())
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
@@ -135,7 +135,7 @@ def cbs_search(initial_state, frontier):
 
 
 def resolve_conflict(agent, constraints, initial_state, box, goal, box_colors):
-    sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+    sa_frontier = FrontierBestFirst(HeuristicDijkstra())
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
@@ -155,7 +155,11 @@ def get_final_state(initial_state, plan):
 def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
     assigner = Assigner(state)
-    print(assigner.assign_plans(), file=sys.stderr)
+    assigner.assign_plans()
+    pre_map = Dijkstra(state).distance_matrix()
+    HeuristicDijkstra.pre_processed_map = pre_map
+    # print(assigner.assign_plans(), file=sys.stderr)
     plann = cbs_search(state, CBSQueue())
-    print(get_final_state(state, plann), file=sys.stderr)
+    get_final_state(state, plann)
+    # print(get_final_state(state, plann), file=sys.stderr)
     return plann
