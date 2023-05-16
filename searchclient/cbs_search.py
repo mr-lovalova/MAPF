@@ -92,7 +92,7 @@ def cbs_search(initial_state, frontier):
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
-        sa_state = replace_colors(State(agent_row, agent_col, box, goal, initial_state.box_colors), agent)
+        sa_state = replace_colors(State(agent_row, agent_col, box, goal, copy.deepcopy(state.box_colors)), agent)
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
