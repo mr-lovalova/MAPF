@@ -92,7 +92,7 @@ def cbs_search(initial_state, frontier):
         sa_frontier = FrontierBestFirst(HeuristicAStar(state))
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent)
-        sa_state = replace_colors(State(agent_row, agent_col, box, goal), agent)
+        sa_state = replace_colors(State(agent_row, agent_col, box, goal, initial_state.box_colors), agent)
         # print("Boxes:", agent, sa_state.boxes, file=sys.stderr)
         # print("Goals:", agent, sa_state._goals, file=sys.stderr)
         goals.append(goal); boxes.append(box)
@@ -123,7 +123,7 @@ def cbs_search(initial_state, frontier):
                 plan = None
             else:
                 plan = resolve_conflict(
-                    agent, m.constraints[agent], initial_state, boxes[agent], goals[agent]
+                    agent, m.constraints[agent], initial_state, boxes[agent], goals[agent], state.box_colors
                 )
                 m.solution[agent] = plan
                 if plan:
@@ -133,12 +133,12 @@ def cbs_search(initial_state, frontier):
         # print("____________________________________", file=sys.stderr)
 
 
-def resolve_conflict(agent, constraints, initial_state, box, goal):
+def resolve_conflict(agent, constraints, initial_state, box, goal, box_colors):
     sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
-    sa_state = State(agent_row, agent_col, box, goal)
+    sa_state = State(agent_row, agent_col, box, goal, box_colors)
     # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
     plan = search(sa_state, sa_frontier, constraints=constraints)
     return plan

@@ -1,14 +1,15 @@
 import random
-
+from typing import List
 from action import Action, ActionType
 from conflict import Conflict
+from color import Color
 import sys
 
 
 class State:
     _RNG = random.Random(1)
 
-    def __init__(self, agent_rows, agent_cols, boxes, goals):
+    def __init__(self, agent_rows, agent_cols, boxes, goals, box_colors: List[Color]):
         """
         Constructs an initial state.
         Arguments are not copied, and therefore should not be modified after being passed in.
@@ -37,6 +38,7 @@ class State:
         self.g = 0
         self.t = 0
         self._hash = None
+        self.box_colors = box_colors
 
     def apply_action(self, joint_action: "[Action, ...]") -> "State":
         """
@@ -75,7 +77,7 @@ class State:
                 copy_agent_rows[agent] += action.agent_row_delta
                 copy_agent_cols[agent] += action.agent_col_delta
 
-        copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes, self._goals)
+        copy_state = State(copy_agent_rows, copy_agent_cols, copy_boxes, self._goals, self.box_colors)
 
         copy_state.parent = self
         copy_state.joint_action = joint_action[:]
@@ -180,7 +182,7 @@ class State:
             destination_col = agent_col + action.agent_col_delta
             return (
                 self.boxes[destination_row][destination_col] != ""
-                and State.box_colors[
+                and self.box_colors[
                     ord(self.boxes[destination_row][destination_col]) - ord("A")
                 ]
                 == agent_color
@@ -195,7 +197,7 @@ class State:
                 agent_col - action.box_col_delta
             ]
             != ""
-            and State.box_colors[
+            and self.box_colors[
                 ord(
                     self.boxes[agent_row - action.box_row_delta][
                         agent_col - action.box_col_delta
@@ -395,7 +397,7 @@ class State:
             _hash = _hash * prime + hash(tuple(self.agent_cols))
             _hash = _hash * prime + hash(tuple(State.agent_colors))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self.boxes))
-            _hash = _hash * prime + hash(tuple(State.box_colors))
+            _hash = _hash * prime + hash(tuple(self.box_colors))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in self._goals))
             _hash = _hash * prime + hash(tuple(tuple(row) for row in State.walls))
             _hash = _hash * prime + hash(self.t)
@@ -417,7 +419,7 @@ class State:
             return False
         if self.boxes != other.boxes:
             return False
-        if State.box_colors != other.box_colors:
+        if self.box_colors != other.box_colors:
             return False
         if self._goals != other._goals:
             return False

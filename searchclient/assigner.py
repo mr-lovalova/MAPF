@@ -107,7 +107,7 @@ class Assigner:
     def assign_tasks_to_agent(self, agent) -> tuple:
         n_rows, n_cols = len(self.state._goals), len(self.state._goals[0])
         agent_color = State.agent_colors[agent]
-        letters = [chr(ord('A') + i) for i in range(26) if State.box_colors[i] == agent_color]
+        letters = [chr(ord('A') + i) for i in range(26) if self.state.box_colors[i] == agent_color]
         floodfill = PathUtils(State.walls)
         reachability_map = floodfill.get_reachability_map((self.state.agent_rows[agent], self.state.agent_cols[agent]))
         boxes = {}
