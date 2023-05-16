@@ -158,7 +158,7 @@ class State:
             if done:
                 break
         # print((self.agent_rows[0], self.agent_cols[0]),len(expanded_states), file = sys.stderr)
-        State._RNG.shuffle(expanded_states)
+        # State._RNG.shuffle(expanded_states)
         return expanded_states
 
     def is_applicable(self, agent: "int", action: "Action", constraints) -> "bool":
