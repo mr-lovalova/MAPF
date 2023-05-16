@@ -4,11 +4,11 @@ import traceback
 
 from graphsearch import search
 from frontier import FrontierBestFirst, CBSQueue
-from heuristic import HeuristicAStar
+from heuristic import HeuristicDijkstra
 from state import State
 from action import Action
 from conflict import Conflict
-from preprocessing import Preprocessor
+from preprocessing import Preprocessor, Dijkstra
 from assigner import Assigner, PathUtils
 
 
@@ -91,7 +91,7 @@ def cbs_search(initial_state, frontier, reachability_maps):
     boxes = []
     for agent, _ in enumerate(initial_state.agent_rows):
         state = copy.deepcopy(initial_state)
-        sa_frontier = FrontierBestFirst(HeuristicAStar(state))
+        sa_frontier = FrontierBestFirst(HeuristicDijkstra())
         agent_row, agent_col = [state.agent_rows[agent]], [state.agent_cols[agent]]
         box, goal = catch_items(state, agent, reachability_maps)
         sa_state = replace_colors(State(agent_row, agent_col, box, goal, initial_state.box_colors), agent)
@@ -117,7 +117,7 @@ def cbs_search(initial_state, frontier, reachability_maps):
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
             # print("New:", agent, conflict.type, constraints, file=sys.stderr)
-            sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+            sa_frontier = FrontierBestFirst(HeuristicDijkstra())
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
@@ -137,7 +137,7 @@ def cbs_search(initial_state, frontier, reachability_maps):
 
 
 def resolve_conflict(agent, constraints, initial_state, box, goal, box_colors):
-    sa_frontier = FrontierBestFirst(HeuristicAStar(initial_state))
+    sa_frontier = FrontierBestFirst(HeuristicDijkstra())
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
@@ -156,6 +156,8 @@ def get_final_state(initial_state, plan):
 
 def sequential_cbs(initial_state):
     state = Preprocessor(initial_state).preprocess()
+    pre_map = Dijkstra(state).distance_matrix()
+    HeuristicDijkstra.pre_processed_map = pre_map
     floodfill = PathUtils(State.walls)
     reachability_maps = [floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent])) for agent in range(len(initial_state.agent_rows))]
     # reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))

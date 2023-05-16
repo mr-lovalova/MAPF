@@ -12,7 +12,6 @@ class Heuristic(metaclass=ABCMeta):
         #for row in initial_state._g:
         #    for col in row:
         #        for
-        # self.map = initial_state.pre_processed_map
         pass
 
     def h(self, state) -> 'int':
@@ -62,107 +61,151 @@ class Heuristic(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class HeuristicDijkstra(Heuristic):
-    def __init__(self, initial_state: 'State'):
-        super().__init__(initial_state)
+class HeuristicDijkstra:
+    assigned_boxes = []
+    assigned_goals = []
+    pre_processed_map = None
+    def __init__(self):
+        pass
+    
+    def h(self, state) -> 'int':
 
+        agent_row = state.agent_rows
+        # print(agent_row,file=sys.stderr)
+        agent_col = state.agent_cols
+        agent_to_box_h = 0
+        box_to_goal_h = 0
+        find_agent = None
+        find_boxes = {}
+        # print("goals",state._goals,file=sys.stderr)
+        # print("GOALS HERE GET YOUR GOALS HERE",state._goals,file=sys.stderr)
+        #if multiple boxes with one goal
+        goal_amount = 0
+        find_goals = {}
+        single_goal = None
+        for row, rows in enumerate(state._goals):
+            for col, cols in enumerate(rows):
+                if cols != '':
+                    if cols not in find_goals:
+                        find_goals[cols] = (col,row)
+                        single_goal = cols
+                        goal_pos = (col,row)
+                        goal_amount+=1
+        # print(goal_amount,file=sys.stderr)
+        if goal_amount == 1:
+            return self.single_goal(state,find_goals,single_goal)
+        elif goal_amount > 1:
+            # print("goal_amount",goal_amount,file=sys.stderr)
+            # return self.mult_goals(state,find_goals)
+            pass
+        hej = "CHECK IF MULTIPLE GOALS FUCKS THE DICT"
+              
+
+        #If multiple boxes and multiple goals
+        #agent to boxes h if only checking one agent at a time
+        if len(agent_row) == 1:
+            for row_pos, row in enumerate(state.boxes):
+                # print("this is before 2nd loop", find_boxes,file=sys.stderr)
+                for col_pos, col in enumerate(row):
+                    if col != '':
+                        find_boxes[col] = (col_pos, row_pos)
+                        box_pos = (col_pos, row_pos)
+                        agent_pos = (agent_col[0],agent_row[0])
+                        if box_pos in self.pre_processed_map[agent_pos]:
+                            agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
+                        else:
+                            continue
+
+            
+        elif len(agent_row) > 1:
+            for agent, agent_dic in enumerate(self.assigned_boxes):
+                for letter in agent_dic[0]:
+                    if len(agent_dic[0][letter]) > 0:
+                        find_boxes[col] = (col_pos, row_pos)
+                        box_pos = (agent_dic[0][letter][0][1],agent_dic[0][letter][0][0])
+                        agent_pos = (col[agent],row[agent])
+                        agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
+        #box to goal len == 1
+        last_box = None           
+        for row, rows in enumerate(state._goals):
+            for col, cols in enumerate(rows):
+                if cols != '' and "A" <= cols <= "Z":
+                    box_pos = find_boxes[cols]
+                    last_box = find_boxes[cols]
+                    goal_pos = (col,row)
+                    if box_pos in self.pre_processed_map[goal_pos]:
+                        box_to_goal_h+=self.pre_processed_map[goal_pos][box_pos]
+                    else:
+                        continue
+                    
+                    
+        #agent to goal len == 1
+        for row, rows in enumerate(state._goals):
+            for col, cols in enumerate(rows):
+                if cols != '' and "0" <= cols <= "9":
+                    if len(find_boxes) > 0:
+                        goal_pos = (col,row)
+                        agent_pos = find_boxes[list(find_boxes.keys())[-1]]
+                        box_to_goal_h+=self.pre_processed_map[goal_pos][box_pos]
+                    else:
+                        goal_pos = (col,row)
+                        agent_pos = last_box
+                        box_to_goal_h+=self.pre_processed_map[goal_pos][agent_pos]
+        return box_to_goal_h+agent_to_box_h
+    
 
     def f(self, state: 'State') -> 'int':
-        return self.h(state)
+        return state.g+self.h(state)
 
     def __repr__(self):
         pass
 
-class Dijkstra():
-    def __init__(self, initial_state: 'State') -> None:
-        self.state = initial_state
-        self.agent_colors = self.state.agent_colors
-        self.agent_row = self.state.agent_rows
-        self.agent_col = self.state.agent_cols
-
-        self.box_colors = self.state.box_colors
-        self.box_locations = self.state.boxes
-        self.walls = self.state.walls
-        self.agent_to_box_h = 0
-        self.box_to_goal_h = 0
-        self.g = 0
-        self.h = 0
-        self.f = self.g+self.h
-
-    def euclidean_distance(self, start: list, end: list) -> int: #Euclidean distance - not used atm
-        return math.sqrt(abs(start[0]-end[0])**2+abs(start[1]-end[1])**2)
-
-    def create_valid_squares_dic(self) -> dict:
-        valid_squares = {(j,i): float('inf') for i,row in enumerate(self.walls) for j,col in enumerate(row) if col is False}
-        return valid_squares
-
-    def adjacency_dict(self, valid_dic: dict) -> dict:
-        valid_dic = {key:{} for key in valid_dic}
-        for i,j in valid_dic:
-            vertex = (i,j)
-            up = (i, j+1)
-            down = (i, j-1)
-            left = (i-1, j)
-            right = (i+1, j)
-
-            if up in valid_dic:
-                if vertex in valid_dic[up]:
-                    if vertex in valid_dic[up]:
-                        pass
-                else:
-                    valid_dic[vertex][up] = 1
-                    valid_dic[up][vertex] = 1
-            if down in valid_dic:
-                if vertex in valid_dic[down]:
-                    pass
-                else:
-                    valid_dic[vertex][down] = 1
-                    valid_dic[down][vertex] = 1
-            if left in valid_dic:
-                if vertex in valid_dic[left]:
-                    pass
-                else:
-                    valid_dic[vertex][left] = 1
-                    valid_dic[left][vertex] = 1
-            if right in valid_dic:
-                if vertex in valid_dic[right]:
-                    pass
-                else:
-                    valid_dic[vertex][right] = 1
-                    valid_dic[right][vertex] = 1
-        return valid_dic
-
-
-    def dijkstra(self, start: tuple[int, int], distance: dict) -> dict:
-        #start is a tuple containing x,y values, i.e. col,rows.
-        graph = self.adjacency_dict(distance)
-        dist = distance.copy()
-        dist[start] = 0
-        queue = [(0, start)]
-
-        while queue:
-            current_distance, current_vertex = heapq.heappop(queue)
-            if current_distance > dist[current_vertex]:
-                continue
-
-            for neighbour, cost in graph[current_vertex].items():
-                new_distance = current_distance+cost
-
-                if new_distance < dist[neighbour]:
-                    dist[neighbour] = new_distance
-                    heapq.heappush(queue, (new_distance, neighbour))
-        delete_keys = []
-        for i,j in dist.items():
-            if isinstance(j, float):
-                delete_keys.append(i)
-        for i in delete_keys:
-            del dist[i]
-        return dist
-
-    def distance_matrix(self):
-        valid = self.create_valid_squares_dic()
-        distance_matrix = {key:self.dijkstra(key, valid) for key in valid}
-        return distance_matrix
+    def mult_goals(self, state, goals):
+        agent_row = state.agent_rows
+        # print(agent_row,file=sys.stderr)
+        agent_col = state.agent_cols
+        agent_to_box_h = 0
+        box_to_goal_h = 0
+        find_agent = None
+        find_boxes = {}
+        #If multiple boxes and multiple goals
+        #agent to boxes h if only checking one agent at a time
+        for row_pos, row in enumerate(state.boxes):
+            # print("this is before 2nd loop", find_boxes,file=sys.stderr)
+            for col_pos, col in enumerate(row):
+                if col in goals:
+                    goal_pos = goals[col]
+                    box_pos = (col_pos, row_pos)
+                    agent_pos = (agent_col[0],agent_row[0])
+                    if box_pos in self.pre_processed_map[agent_pos]:
+                        agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
+                    if box_pos in self.pre_processed_map[goal_pos]:
+                        box_to_goal_h+=self.pre_processed_map[box_pos][goal_pos]
+                    else:
+                        continue
+        return agent_to_box_h+box_to_goal_h
+    
+    def single_goal(self,state,goal,goal_letter):
+        agent_row = state.agent_rows[0]
+        agent_col = state.agent_cols[0]
+        agent_to_box_h = 0
+        box_to_agent_h = 0
+        #If single box and single goal
+        #agent to box
+        for row_pos, row in enumerate(state.boxes):
+            # print("this is before 2nd loop", find_boxes,file=sys.stderr)
+            for col_pos, col in enumerate(row):
+                if col == goal_letter:
+                    box_pos = (col_pos, row_pos)
+                    goal_pos = goal[col]
+                    agent_pos = (agent_col,agent_row)
+                    if box_pos in self.pre_processed_map[goal_pos]:
+                        agent_to_box_h+=self.pre_processed_map[goal_pos][box_pos]
+                    if box_pos in self.pre_processed_map[agent_pos]:
+                        agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
+                    else:
+                        continue
+        return agent_to_box_h+box_to_agent_h
 
 
 class HeuristicAStar(Heuristic):
