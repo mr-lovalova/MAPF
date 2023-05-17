@@ -160,14 +160,13 @@ def sequential_cbs(initial_state):
     HeuristicDijkstra.pre_processed_map = pre_map
     floodfill = PathUtils(State.walls)
     reachability_maps = [floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent])) for agent in range(len(initial_state.agent_rows))]
-    # reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))
     assigner = Assigner(state)
     agent_tasks = [task[1:-1] for task in assigner.assign_plans()]
     #print(agent_tasks, file=sys.stderr)
     initial_state_goals = copy.deepcopy(initial_state._goals)
     boxes = copy.deepcopy(initial_state.boxes)
     plan = []
-    max_task_length = max([len(task) for task in agent_tasks])  
+    max_task_length = max([len(task) for task in agent_tasks])
     for i in range(max_task_length):
         goals = [["" for col in range(len(initial_state.boxes[0]))] for row in range(len(initial_state.boxes))]
         for j, agent_task in enumerate(agent_tasks):
@@ -175,21 +174,21 @@ def sequential_cbs(initial_state):
                 task = agent_task[i]
                 goals = [[task.letter if task.position == (row, col) else goals[row][col] for col in range(len(initial_state.walls[0]))] for row in range(len(initial_state.walls))]
             except IndexError as e:
-                # traceback.print_exc()
-                # print(f"Index Error in seq_cbs, error: {e}", file=sys.stderr)
                 pass
-        # print(f"goals: {goals}", file=sys.stderr)
         state._goals = goals
-        plan += cbs_search(state, CBSQueue(), reachability_maps)
-        print(plan, file=sys.stderr)
-        state = get_final_state(initial_state, plan)
+        print(state, file=sys.stderr)
+        step_plan = cbs_search(state, CBSQueue(), reachability_maps)
+        plan += step_plan
+        # print(plan, file=sys.stderr)
+        state = get_final_state(state, step_plan)
+        print(state, file=sys.stderr)
         boxes = state.boxes
         for row in range(len(boxes)):
             for col in range(len(boxes[0])):
                 if boxes[row][col] == initial_state_goals[row][col]:
                     boxes[row][col] = ""
         state.boxes = boxes
-        print(boxes, file=sys.stderr)
-    print(plan, file=sys.stderr)
-    print(get_final_state(initial_state, plan), file=sys.stderr)
+        # print(boxes, file=sys.stderr)
+    # print(plan, file=sys.stderr)
+    # print(get_final_state(initial_state, plan), file=sys.stderr)
     return plan

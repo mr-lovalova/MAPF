@@ -154,8 +154,8 @@ class SearchClient:
             )
         elif args.greedy:
             frontier = FrontierBestFirst(HeuristicGreedy(initial_state))
-        # elif args.cbs:
-        #     frontier = CBSQueue()
+        elif args.cbs:
+            frontier = CBSQueue()
         else:
             # Default to BFS search.
             frontier = FrontierBFS()
