@@ -62,12 +62,14 @@ class State:
             elif action.type is ActionType.Push:
                 copy_agent_rows[agent] += action.agent_row_delta
                 copy_agent_cols[agent] += action.agent_col_delta
+
                 copy_boxes[copy_agent_rows[agent] + action.box_row_delta][
                     copy_agent_cols[agent] + action.box_col_delta
                 ] = copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]]
                 copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = ""
 
             elif action.type is ActionType.Pull:
+                #print("hereahdjashdajhsd",action.agent_col_delta, file = sys.stderr)
                 copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = copy_boxes[
                     copy_agent_rows[agent] - action.box_row_delta
                 ][copy_agent_cols[agent] - action.box_col_delta]

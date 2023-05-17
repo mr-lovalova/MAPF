@@ -163,7 +163,7 @@ def sequential_cbs(initial_state):
     # reachability_map = floodfill.get_reachability_map((state.agent_rows[agent], state.agent_cols[agent]))
     assigner = Assigner(state)
     agent_tasks = [task[1:-1] for task in assigner.assign_plans()]
-    print(agent_tasks, file=sys.stderr)
+    #print(agent_tasks, file=sys.stderr)
     initial_state_goals = copy.deepcopy(initial_state._goals)
     boxes = copy.deepcopy(initial_state.boxes)
     plan = []
@@ -191,5 +191,5 @@ def sequential_cbs(initial_state):
         state.boxes = boxes
         print(boxes, file=sys.stderr)
     print(plan, file=sys.stderr)
-    print(get_final_state(state, plan), file=sys.stderr)
+    print(get_final_state(initial_state, plan), file=sys.stderr)
     return plan
