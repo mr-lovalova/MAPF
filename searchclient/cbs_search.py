@@ -105,10 +105,10 @@ def cbs_search(initial_state, frontier, reachability_maps):
     frontier.add(root)
     count = 0
     while not frontier.is_empty():
-        # print("Count:", count, file=sys.stderr)
+        print("Count:", count, file=sys.stderr)
         node = frontier.pop()
         for i, solution in enumerate(node.solution):
-            # print("Popped:", i, solution, file=sys.stderr)
+            print("Popped:", i, solution, file=sys.stderr)
             pass
         conflict = node.get_conflict()
         if conflict is None:
@@ -116,12 +116,12 @@ def cbs_search(initial_state, frontier, reachability_maps):
             return plan
         for agent in conflict.agents:
             constraints = conflict.constraints[agent]
-            # print("New:", agent, conflict.type, constraints, file=sys.stderr)
+            print("New:", agent, conflict.type, constraints, file=sys.stderr)
             sa_frontier = FrontierBestFirst(HeuristicDijkstra())
             m = copy.deepcopy(node)
             m.count = count
             m.constraints[agent].update(constraints)
-            # print("Total:", agent, m.constraints[agent], file=sys.stderr)
+            print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
             else:
@@ -130,7 +130,7 @@ def cbs_search(initial_state, frontier, reachability_maps):
                 )
                 m.solution[agent] = plan
                 if plan:
-                    # print("Fixed:", agent, plan, file=sys.stderr)
+                    print("Fixed:", agent, plan, file=sys.stderr)
                     frontier.add(m)
         count += 1
         # print("____________________________________", file=sys.stderr)
@@ -178,6 +178,7 @@ def sequential_cbs(initial_state):
         state._goals = goals
         print(state, file=sys.stderr)
         step_plan = cbs_search(state, CBSQueue(), reachability_maps)
+        print(step_plan, file=sys.stderr)
         plan += step_plan
         # print(plan, file=sys.stderr)
         state = get_final_state(state, step_plan)
