@@ -1,55 +1,11 @@
 from abc import ABCMeta, abstractmethod
-import sys
-import math
-import heapq
+
 
 class Heuristic(metaclass=ABCMeta):
     def __init__(self, initial_state: 'State'):
-        # Here's a chance to pre-process the static parts of the level.
-        #self.x_goal
-        #self.y_goal
-        #self.num_agents = len(initial_state.agent_rows)
-        #for row in initial_state._g:
-        #    for col in row:
-        #        for
         pass
 
     def h(self, state) -> 'int':
-        # row = state.agent_rows
-        # col = state.agent_cols
-        # agent_colors = state.agent_colors
-        # box_loc = state.boxes
-        # box_colors = state.box_colors
-        # goals = state._goals
-        #
-        # agent_to_box_h = 0
-        # box_to_goal_h = 0
-        # box_pos_col = {}
-        # #agent to box distances
-        # for i, rows in enumerate(box_loc):
-        #     for j, cols in enumerate(rows):
-        #         if cols != '':
-        #             box_color = box_colors[ord(cols)-65]
-        #             box_pos = (j,i)
-        #             box_pos_col[cols] = (j,i)
-        #             agent = [i.value for i in agent_colors if i == box_color]
-        #             agent_pos = (col[agent[0]],row[agent[0]])
-        #             agent_to_box_h+=self.map[agent_pos][box_pos]
-        #
-        #
-        # #box to goal distances - includes initial agent location to agent goal if needed
-        # for i, rows in enumerate(goals):
-        #     for j, cols in enumerate(rows):
-        #         if cols != '' and cols in box_pos_col:
-        #             goal_pos = (j,i)
-        #             box_pos = box_pos_col[cols]
-        #             box_to_goal_h+=self.map[goal_pos][box_pos]
-        #         elif cols != '':
-        #             goal_pos = (j,i)
-        #             agent_pos = (col[int(cols)],row[int(cols)])
-        #             box_to_goal_h+=self.map[goal_pos][agent_pos]
-        # # print(agent_to_box_h+box_to_goal_h,file=sys.stderr)
-        # return agent_to_box_h+box_to_goal_h
         return 0
 
     @abstractmethod
@@ -69,17 +25,11 @@ class HeuristicDijkstra:
         pass
 
     def h(self, state) -> 'int':
-
         agent_row = state.agent_rows
-        # print(agent_row,file=sys.stderr)
         agent_col = state.agent_cols
         agent_to_box_h = 0
         box_to_goal_h = 0
-        find_agent = None
         find_boxes = {}
-        # print("goals",state._goals,file=sys.stderr)
-        # print("GOALS HERE GET YOUR GOALS HERE",state._goals,file=sys.stderr)
-        #if multiple boxes with one goal
         goal_amount = 0
         find_goals = {}
         single_goal = None
@@ -91,21 +41,11 @@ class HeuristicDijkstra:
                         single_goal = cols
                         goal_pos = (col,row)
                         goal_amount+=1
-        # print(goal_amount,file=sys.stderr)
         if goal_amount == 1:
             return self.single_goal(state,find_goals,single_goal)
-        elif goal_amount > 1:
-            # print("goal_amount",goal_amount,file=sys.stderr)
-            # return self.mult_goals(state,find_goals)
-            pass
-        hej = "CHECK IF MULTIPLE GOALS FUCKS THE DICT"
 
-
-        #If multiple boxes and multiple goals
-        #agent to boxes h if only checking one agent at a time
         if len(agent_row) == 1:
             for row_pos, row in enumerate(state.boxes):
-                # print("this is before 2nd loop", find_boxes,file=sys.stderr)
                 for col_pos, col in enumerate(row):
                     if col != '':
                         find_boxes[col] = (col_pos, row_pos)
@@ -125,7 +65,7 @@ class HeuristicDijkstra:
                         box_pos = (agent_dic[0][letter][0][1],agent_dic[0][letter][0][0])
                         agent_pos = (col[agent],row[agent])
                         agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
-        #box to goal len == 1
+
         last_box = None
         for row, rows in enumerate(state._goals):
             for col, cols in enumerate(rows):
@@ -138,8 +78,6 @@ class HeuristicDijkstra:
                     else:
                         continue
 
-
-        #agent to goal len == 1
         for row, rows in enumerate(state._goals):
             for col, cols in enumerate(rows):
                 if cols != '' and "0" <= cols <= "9":
@@ -153,7 +91,6 @@ class HeuristicDijkstra:
                         box_to_goal_h+=self.pre_processed_map[goal_pos][agent_pos]
         return box_to_goal_h+agent_to_box_h
 
-
     def f(self, state: 'State') -> 'int':
         return state.g+self.h(state)
 
@@ -162,16 +99,10 @@ class HeuristicDijkstra:
 
     def mult_goals(self, state, goals):
         agent_row = state.agent_rows
-        # print(agent_row,file=sys.stderr)
         agent_col = state.agent_cols
         agent_to_box_h = 0
         box_to_goal_h = 0
-        find_agent = None
-        find_boxes = {}
-        #If multiple boxes and multiple goals
-        #agent to boxes h if only checking one agent at a time
         for row_pos, row in enumerate(state.boxes):
-            # print("this is before 2nd loop", find_boxes,file=sys.stderr)
             for col_pos, col in enumerate(row):
                 if col in goals:
                     goal_pos = goals[col]
@@ -190,10 +121,7 @@ class HeuristicDijkstra:
         agent_col = state.agent_cols[0]
         agent_to_box_h = 0
         box_to_agent_h = 0
-        #If single box and single goal
-        #agent to box
         for row_pos, row in enumerate(state.boxes):
-            # print("this is before 2nd loop", find_boxes,file=sys.stderr)
             for col_pos, col in enumerate(row):
                 if col == goal_letter:
                     box_pos = (col_pos, row_pos)
@@ -218,6 +146,7 @@ class HeuristicAStar(Heuristic):
     def __repr__(self):
         return 'A* evaluation'
 
+
 class HeuristicWeightedAStar(Heuristic):
     def __init__(self, initial_state: 'State', w: 'int'):
         super().__init__(initial_state)
@@ -228,6 +157,7 @@ class HeuristicWeightedAStar(Heuristic):
 
     def __repr__(self):
         return 'WA*({}) evaluation'.format(self.w)
+
 
 class HeuristicGreedy(Heuristic):
     def __init__(self, initial_state: 'State'):

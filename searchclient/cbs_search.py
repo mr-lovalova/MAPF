@@ -1,6 +1,4 @@
 import copy
-import sys
-import traceback
 
 from graphsearch import search
 from frontier import FrontierBestFirst, CBSQueue
