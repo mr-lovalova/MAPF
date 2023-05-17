@@ -54,7 +54,7 @@ class Conflict:
             c = set()
             c.add((v, times[count]))
             # c.add((v, times2[count]))  ## extra speed
-            c.add((v, t))
+            #c.add((v, t))
             constraints.append(c)
         return cls(agents, constraints, conflict, type_)
 

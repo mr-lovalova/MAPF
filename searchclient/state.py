@@ -334,12 +334,6 @@ class State:
                 box_rows[agent] = agent_row + action.agent_row_delta + action.box_row_delta
                 box_cols[agent] = agent_col + action.agent_col_delta + action.box_col_delta
 
-            # elif action.type is ActionType.Pull:
-            #     destination_rows[agent] = agent_row + action.agent_row_delta
-            #     destination_cols[agent] = agent_col + action.agent_col_delta
-            #     box_rows[agent] = agent_row
-            #     box_cols[agent] = agent_col
-
         for a1 in range(num_agents):
             for a2 in range(a1 + 1, num_agents):
                 if (

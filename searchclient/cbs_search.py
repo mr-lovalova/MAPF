@@ -76,11 +76,14 @@ def replace_colors(state: State, agent: int) -> State:
     updated_state = copy.deepcopy(state)
     agent_color = copy.deepcopy(state.agent_colors[agent])
     first_box_color = state.box_colors[0]
+    first_box_color = state.agent_colors[0]
+    print(state.box_colors, file = sys.stderr)
     for i in range(len(state.box_colors)):
         if state.box_colors[i] is not agent_color:
             updated_state.box_colors[i] = None
         else:
             updated_state.box_colors[i] = first_box_color
+
     return updated_state
 
 
@@ -124,11 +127,14 @@ def cbs_search(initial_state, frontier, reachability_maps):
             print("Total:", agent, m.constraints[agent], file=sys.stderr)
             if not conflict.resolveable[agent]:
                 plan = None
+                print("HERhe", file = sys.stderr)
             else:
+                print("Fixed3:", agent, m.constraints[agent], file=sys.stderr)
                 plan = resolve_conflict(
                     agent, m.constraints[agent], initial_state, boxes[agent], goals[agent], state.box_colors
                 )
                 m.solution[agent] = plan
+                print("Fixed2:", agent, plan, file=sys.stderr)
                 if plan:
                     print("Fixed:", agent, plan, file=sys.stderr)
                     frontier.add(m)
@@ -141,7 +147,8 @@ def resolve_conflict(agent, constraints, initial_state, box, goal, box_colors):
     agent_row, agent_col = [initial_state.agent_rows[agent]], [
         initial_state.agent_cols[agent]
     ]
-    sa_state = State(agent_row, agent_col, box, goal, box_colors)
+    #sa_state = State(agent_row, agent_col, box, goal, box_colors)
+    sa_state = replace_colors(State(agent_row, agent_col, box, goal, initial_state.box_colors), agent)
     # print(f"Conflict resolution search for agent {agent}", file=sys.stderr)
     plan = search(sa_state, sa_frontier, constraints=constraints)
     return plan
