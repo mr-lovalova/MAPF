@@ -69,7 +69,6 @@ class State:
                 copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = ""
 
             elif action.type is ActionType.Pull:
-                #print("hereahdjashdajhsd",action.agent_col_delta, file = sys.stderr)
                 copy_boxes[copy_agent_rows[agent]][copy_agent_cols[agent]] = copy_boxes[
                     copy_agent_rows[agent] - action.box_row_delta
                 ][copy_agent_cols[agent] - action.box_col_delta]
@@ -160,7 +159,7 @@ class State:
             if done:
                 break
         # print((self.agent_rows[0], self.agent_cols[0]),len(expanded_states), file = sys.stderr)
-        # State._RNG.shuffle(expanded_states)
+        State._RNG.shuffle(expanded_states)
         return expanded_states
 
     def is_applicable(self, agent: "int", action: "Action", constraints) -> "bool":
