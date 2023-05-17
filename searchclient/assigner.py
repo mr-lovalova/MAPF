@@ -1,5 +1,6 @@
 import collections
 from sys import stderr
+import copy
 
 from state import State
 
@@ -103,11 +104,13 @@ class GoalsGraph:
 class Assigner:
     def __init__(self, initial_state: State) -> None:
         self.state = initial_state
+        self.remaining_goals = copy.deepcopy(self.state._goals)
 
     def assign_tasks_to_agent(self, agent) -> tuple:
         n_rows, n_cols = len(self.state._goals), len(self.state._goals[0])
         agent_color = State.agent_colors[agent]
         letters = [chr(ord('A') + i) for i in range(26) if self.state.box_colors[i] == agent_color]
+
         floodfill = PathUtils(State.walls)
         reachability_map = floodfill.get_reachability_map((self.state.agent_rows[agent], self.state.agent_cols[agent]))
         boxes = {}
@@ -115,17 +118,18 @@ class Assigner:
             boxes[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state.boxes[row][col] == letter and reachability_map[row][col]]
         goals = {}
         for letter in letters + [chr(ord('0') + agent)]:
-            goals[letter] = [(row, col) for row in range(n_rows) for col in range(n_cols) if self.state._goals[row][col] == letter and reachability_map[row][col]]
-
-        # print(f"Agent {agent} boxes: {boxes}", file=stderr, flush=True)
-        # print(f"Agent {agent} goals: {goals}", file=stderr, flush=True)
+            goals[letter] = []
+            for row in range(n_rows):
+                for col in range(n_cols):
+                    if self.remaining_goals[row][col] == letter and reachability_map[row][col]:
+                        goals[letter].append((row, col))
+                        self.remaining_goals[row][col] = ' '
         return boxes, goals
 
     def get_graph(self, agent) -> GoalsGraph:
         tasks = self.assign_tasks_to_agent(agent)[1]
         agent_position = (self.state.agent_rows[agent], self.state.agent_cols[agent])
         graph = GoalsGraph(tasks, agent_position)
-        # print(graph.nodes, file=stderr, flush=True)
         return graph
 
     def assign_plans(self) -> list:

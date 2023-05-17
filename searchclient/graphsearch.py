@@ -17,27 +17,13 @@ def search(initial_state, frontier, constraints=set()):
 
     while True:
         iterations += 1
-        if iterations % 1000 == 0:
-            pass
-            # print_search_status(explored, frontier)
-
-        if memory.get_usage() > memory.max_usage:
-            # print_search_status(explored, frontier)
-            # print("Maximum memory usage exceeded.", file=sys.stderr, flush=True)
-            return None
 
         if frontier.is_empty():
             return None
-
         state = frontier.pop()
-
-        #print(state, file=sys.stderr)
 
         if state.is_goal_state(constraints):
             plan = state.extract_plan()
-            # print(state.get_visited_locations(), file=sys.stderr, flush=True)
-            # print(constraints, file=sys.stderr, flush=True)
-            # print(f"{plan}\n{constraints}\n{state.t}\n\n", file=sys.stderr, flush=True)
             return plan
 
         explored.add(state)

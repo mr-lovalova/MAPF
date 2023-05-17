@@ -67,7 +67,7 @@ class HeuristicDijkstra:
     pre_processed_map = None
     def __init__(self):
         pass
-    
+
     def h(self, state) -> 'int':
 
         agent_row = state.agent_rows
@@ -99,7 +99,7 @@ class HeuristicDijkstra:
             # return self.mult_goals(state,find_goals)
             pass
         hej = "CHECK IF MULTIPLE GOALS FUCKS THE DICT"
-              
+
 
         #If multiple boxes and multiple goals
         #agent to boxes h if only checking one agent at a time
@@ -116,7 +116,7 @@ class HeuristicDijkstra:
                         else:
                             continue
 
-            
+
         elif len(agent_row) > 1:
             for agent, agent_dic in enumerate(self.assigned_boxes):
                 for letter in agent_dic[0]:
@@ -126,7 +126,7 @@ class HeuristicDijkstra:
                         agent_pos = (col[agent],row[agent])
                         agent_to_box_h+=self.pre_processed_map[agent_pos][box_pos]
         #box to goal len == 1
-        last_box = None           
+        last_box = None
         for row, rows in enumerate(state._goals):
             for col, cols in enumerate(rows):
                 if cols != '' and "A" <= cols <= "Z":
@@ -137,8 +137,8 @@ class HeuristicDijkstra:
                         box_to_goal_h+=self.pre_processed_map[goal_pos][box_pos]
                     else:
                         continue
-                    
-                    
+
+
         #agent to goal len == 1
         for row, rows in enumerate(state._goals):
             for col, cols in enumerate(rows):
@@ -152,7 +152,7 @@ class HeuristicDijkstra:
                         agent_pos = last_box
                         box_to_goal_h+=self.pre_processed_map[goal_pos][agent_pos]
         return box_to_goal_h+agent_to_box_h
-    
+
 
     def f(self, state: 'State') -> 'int':
         return state.g+self.h(state)
@@ -184,7 +184,7 @@ class HeuristicDijkstra:
                     else:
                         continue
         return agent_to_box_h+box_to_goal_h
-    
+
     def single_goal(self,state,goal,goal_letter):
         agent_row = state.agent_rows[0]
         agent_col = state.agent_cols[0]

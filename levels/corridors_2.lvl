@@ -1,0 +1,37 @@
+#domain
+hospital
+#levelname
+corridors
+#colors
+red: 1, A, B, C, D, E, F
+blue: 2, G, H, I, J, K, L
+green: 3,M, N, O, P, Q, R, S
+pink: 0, T, U, V, W, X, Y
+purple: Z
+#initial
+++++++++++++++++++++++++++++
++ 12                     30+
++                          +
++                          +
++                      M   +
++ ZA   Z ZL      TZ Z ZN   +
++ ZB   Z ZK      UZ Z ZO   +
++ ZC   Z ZJ      VZ Z ZP   +
++ ZD   Z ZI      WZ Z ZQ   +
++ ZE   Z ZH      XZ Z ZR   +
++ ZF   Z ZG      YZ Z ZS   +
+++++++++++++++++++++++++++++
+#goal
+++++++++++++++++++++++++++++
++                          +
++                          +
++                          +
++                    S     +
++F      G          Y R     +
++E      H          X Q     +
++D      I          W P     +
++C      J          V O     +
++B      K          U N     +
++A      L          T M     +
+++++++++++++++++++++++++++++
+#end

@@ -15,6 +15,7 @@ from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy, H
 from graphsearch import search
 from cbs_search import cbs_search, sequential_cbs
 
+sys.setrecursionlimit(1500)
 
 class SearchClient:
     @staticmethod
@@ -97,7 +98,6 @@ class SearchClient:
         #State.box_colors = box_colors
         # Conflict.constraints = [None for _ in range(num_agents)]
         # Conflict.resolveable = [True for _ in range(num_agents)]
-        print("BOX COLOERS",box_colors, file=sys.stderr)
         # State.goals = goals
         return State(agent_rows, agent_cols, boxes, goals, box_colors)
 
@@ -124,7 +124,7 @@ class SearchClient:
     def main(args) -> None:
         # Use stderr to print to the console.
         print(
-            "SearchClient initializing. I am sending this using the error output stream.",
+            "SearchClient initializing.",
             file=sys.stderr,
             flush=True,
         )

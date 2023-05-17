@@ -100,9 +100,6 @@ class State:
         if constraints == set():
             return True
         max_time = max(constraint[1] for constraint in constraints)
-        # print(constraints, file=sys.stderr)
-        # print(self.get_visited_locations(max_time), file=sys.stderr)
-        # print(constraints & self.get_visited_locations(max_time) == set(), file=sys.stderr)
         return constraints & self.get_visited_locations(max_time) == set()
 
     def get_visited_locations(self, max_time=None):
@@ -127,7 +124,6 @@ class State:
             ]
             for agent in range(num_agents)
         ]
-        # print(f"Applicable actions: {applicable_actions}", file=sys.stderr)
         joint_action = [None for _ in range(num_agents)]
         actions_permutation = [0 for _ in range(num_agents)]
         expanded_states = []
@@ -138,7 +134,6 @@ class State:
                         actions_permutation[agent]
                     ]
                 except IndexError:
-                    # print(actions_permutation, file=sys.stderr)
                     return expanded_states
 
             if not self.is_conflicting(joint_action):
@@ -158,7 +153,6 @@ class State:
             # Last permutation?
             if done:
                 break
-        # print((self.agent_rows[0], self.agent_cols[0]),len(expanded_states), file = sys.stderr)
         State._RNG.shuffle(expanded_states)
         return expanded_states
 
